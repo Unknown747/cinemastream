@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "CinemaStream"
+version = "1.0.0"
+id = "artifacts/cinemastream"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26168
+
+[services.development]
+run = "pnpm --filter @workspace/cinemastream run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cinemastream", "run", "build" ]
+publicDir = "artifacts/cinemastream/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26168"
+BASE_PATH = "/"

@@ -2,26 +2,33 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+pnpm workspace monorepo using TypeScript. Hosts the CinemaStream movie streaming web app.
+
+## Artifacts
+
+- **cinemastream** (`/`) — Movie streaming web app (React + Vite, frontend-only).
+  Plays films via YouTube embeds, no video storage.
+  Features: home, browse, movie detail w/ player, genre pages, about, 404.
+  SEO: react-helmet-async, JSON-LD (Movie + VideoObject), robots.txt, sitemap.xml.
 
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
+- **Node.js**: 24
+- **TypeScript**: 5.9
+- **Frontend**: React 19, Vite, Wouter, Tailwind v4, shadcn/ui, Framer Motion
+- **SEO**: react-helmet-async + JSON-LD structured data
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
 
 ## Key Commands
 
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
+- `pnpm run typecheck` — full typecheck
+- `pnpm run build` — typecheck + build
+- `pnpm --filter @workspace/cinemastream run dev` — run cinemastream locally
+- `cd artifacts/cinemastream && node scripts/generate-sitemap.mjs` — regenerate sitemap.xml after adding/removing movies
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## Adding new movies
+
+Edit `artifacts/cinemastream/src/data/movies.ts`, add a new entry with the
+official YouTube video ID, then re-run the sitemap generator script.
