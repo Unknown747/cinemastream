@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Loader2, Tv, RefreshCw, AlertCircle } from "lucide-react";
+import { Loader2, Tv2, RefreshCw, AlertCircle, Search } from "lucide-react";
 import {
   useListAllVideos,
   useListChannels,
@@ -10,22 +10,7 @@ import {
 } from "@workspace/api-client-react";
 import { Seo } from "@/components/seo";
 import { Button } from "@/components/ui/button";
-
-function formatRelative(iso: string): string {
-  const d = new Date(iso).getTime();
-  const diff = Date.now() - d;
-  const day = 24 * 60 * 60 * 1000;
-  if (diff < day) return "Hari ini";
-  if (diff < 2 * day) return "Kemarin";
-  if (diff < 7 * day) return `${Math.floor(diff / day)} hari lalu`;
-  if (diff < 30 * day) return `${Math.floor(diff / (7 * day))} minggu lalu`;
-  if (diff < 365 * day) return `${Math.floor(diff / (30 * day))} bulan lalu`;
-  return new Date(iso).toLocaleDateString("id-ID", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+import { DramaCard } from "@/components/drama-card";
 
 export default function DramaPage() {
   const channels = useListChannels({
@@ -39,18 +24,30 @@ export default function DramaPage() {
     },
   });
   const [query, setQuery] = useState("");
+  const [activeChannel, setActiveChannel] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    const list = videos.data ?? [];
-    if (!query.trim()) return list;
-    const q = query.toLowerCase();
-    return list.filter(
-      (v) =>
-        v.title.toLowerCase().includes(q) ||
-        v.originalTitle.toLowerCase().includes(q) ||
-        v.channelName.toLowerCase().includes(q),
-    );
-  }, [videos.data, query]);
+    let list = videos.data ?? [];
+    if (activeChannel) list = list.filter((v) => v.channelId === activeChannel);
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      list = list.filter(
+        (v) =>
+          v.title.toLowerCase().includes(q) ||
+          v.originalTitle.toLowerCase().includes(q) ||
+          v.channelName.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [videos.data, query, activeChannel]);
+
+  const channelStats = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const v of videos.data ?? []) {
+      counts.set(v.channelId, (counts.get(v.channelId) ?? 0) + 1);
+    }
+    return counts;
+  }, [videos.data]);
 
   const itemListJsonLd = useMemo(() => {
     if (filtered.length === 0) return null;
@@ -99,144 +96,198 @@ export default function DramaPage() {
         }
       />
 
-      <section className="pt-28 pb-12">
+      {/* Hero header */}
+      <section className="relative pt-28 pb-10 overflow-hidden border-b border-border/40">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_rgba(212,138,68,0.12),_transparent_60%)]" />
         <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
           >
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs uppercase tracking-widest text-primary">
-                <Tv className="h-3.5 w-3.5" />
-                Update Otomatis
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+              <Tv2 className="h-3.5 w-3.5" />
+              Update Otomatis
+            </div>
+            <h1 className="mt-4 font-serif text-4xl sm:text-5xl lg:text-6xl tracking-tight text-balance">
+              Semua Drama
+            </h1>
+            <p className="mt-3 max-w-2xl text-foreground/70 text-base sm:text-lg">
+              Koleksi lengkap dari semua channel pilihan, dengan judul Bahasa
+              Indonesia. Saring berdasarkan channel atau cari judul tertentu.
+            </p>
+
+            {(videos.data?.length ?? 0) > 0 && (
+              <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-foreground/60">
+                <span>
+                  <strong className="text-foreground">{videos.data?.length}</strong>{" "}
+                  episode
+                </span>
+                <span>
+                  <strong className="text-foreground">{channels.data?.length ?? 0}</strong>{" "}
+                  channel
+                </span>
+                <span>
+                  <strong className="text-foreground">
+                    {videos.data?.filter((v) => v.hasOverride).length ?? 0}
+                  </strong>{" "}
+                  judul Bahasa Indonesia
+                </span>
               </div>
-              <h1 className="mt-3 font-serif text-4xl sm:text-5xl tracking-tight">
-                Drama Series
-              </h1>
-              <p className="mt-2 max-w-2xl text-foreground/70">
-                Episode terbaru dari channel pilihan, segar setiap kali kreator
-                upload. Judul sudah dialih-bahasakan ke Indonesia bila tersedia.
-              </p>
-              {channels.data && channels.data.length > 0 && (
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="text-xs uppercase tracking-widest text-foreground/50">
-                    Channel:
-                  </span>
-                  {channels.data.map((c) => (
-                    <span
-                      key={c.id}
-                      className="rounded-full border border-border/60 bg-card/40 px-3 py-1 text-xs text-foreground/80"
-                      data-testid={`badge-channel-${c.id}`}
-                    >
-                      {c.name}
-                    </span>
-                  ))}
+            )}
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="py-10">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12">
+          <div className="flex flex-col gap-6 lg:flex-row">
+            {/* Sidebar — channels */}
+            <aside className="lg:w-64 lg:shrink-0">
+              <div className="sticky top-24 space-y-6">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50 mb-3">
+                    Cari
+                  </p>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/40" />
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Cari judul..."
+                      className="h-10 w-full rounded-md border border-border/60 bg-card/60 pl-9 pr-3 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
+                      data-testid="input-search-drama"
+                    />
+                  </div>
+                </div>
+
+                {(channels.data?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                        Channel
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => videos.refetch()}
+                        disabled={videos.isFetching}
+                        aria-label="Refresh"
+                        className="h-7 w-7"
+                        data-testid="button-refresh-drama"
+                      >
+                        <RefreshCw
+                          className={`h-3.5 w-3.5 ${videos.isFetching ? "animate-spin" : ""}`}
+                        />
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-1">
+                      <button
+                        onClick={() => setActiveChannel(null)}
+                        className={`text-left text-sm rounded-md px-3 py-2 transition ${
+                          activeChannel === null
+                            ? "bg-primary/15 text-primary font-medium"
+                            : "text-foreground/70 hover:text-foreground hover:bg-card/60"
+                        }`}
+                        data-testid="button-channel-all"
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span>Semua channel</span>
+                          <span className="text-xs text-foreground/50">
+                            {videos.data?.length ?? 0}
+                          </span>
+                        </span>
+                      </button>
+                      {channels.data?.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => setActiveChannel(c.channelId)}
+                          className={`text-left text-sm rounded-md px-3 py-2 transition ${
+                            activeChannel === c.channelId
+                              ? "bg-primary/15 text-primary font-medium"
+                              : "text-foreground/70 hover:text-foreground hover:bg-card/60"
+                          }`}
+                          data-testid={`button-channel-${c.id}`}
+                        >
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="truncate">{c.name}</span>
+                            <span className="text-xs text-foreground/50">
+                              {channelStats.get(c.channelId) ?? 0}
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </aside>
+
+            {/* Grid */}
+            <div className="flex-1 min-w-0">
+              {(channels.data?.length ?? 0) === 0 && !channels.isLoading && (
+                <div className="rounded-lg border border-dashed border-border/60 bg-card/40 p-10 text-center">
+                  <AlertCircle className="mx-auto h-8 w-8 text-foreground/40" />
+                  <p className="mt-3 text-foreground/80">
+                    Belum ada channel terdaftar.
+                  </p>
+                  <Link
+                    href="/admin"
+                    className="mt-3 inline-block text-sm text-primary hover:underline"
+                  >
+                    Tambah channel di halaman Admin →
+                  </Link>
                 </div>
               )}
-            </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Cari judul..."
-                className="h-10 w-full md:w-64 rounded-md border border-border/60 bg-card/60 px-4 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
-                data-testid="input-search-drama"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => videos.refetch()}
-                disabled={videos.isFetching}
-                aria-label="Refresh"
-                data-testid="button-refresh-drama"
-              >
-                <RefreshCw
-                  className={`h-4 w-4 ${videos.isFetching ? "animate-spin" : ""}`}
-                />
-              </Button>
-            </div>
-          </motion.div>
+              {videos.isLoading && (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              )}
 
-          {(channels.data?.length ?? 0) === 0 && !channels.isLoading && (
-            <div className="mt-10 rounded-lg border border-dashed border-border/60 bg-card/40 p-8 text-center">
-              <AlertCircle className="mx-auto h-8 w-8 text-foreground/40" />
-              <p className="mt-3 text-foreground/80">
-                Belum ada channel terdaftar.
-              </p>
-              <Link
-                href="/admin"
-                className="mt-3 inline-block text-sm text-primary hover:underline"
-              >
-                Tambah channel di halaman Admin →
-              </Link>
-            </div>
-          )}
+              {videos.isError && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-center">
+                  <p className="text-destructive">
+                    Gagal memuat video. Coba refresh.
+                  </p>
+                </div>
+              )}
 
-          {videos.isLoading && (
-            <div className="mt-16 flex justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          )}
+              {filtered.length > 0 && (
+                <>
+                  <div className="mb-4 flex items-center justify-between text-sm text-foreground/60">
+                    <span>
+                      Menampilkan <strong className="text-foreground">{filtered.length}</strong>{" "}
+                      episode
+                    </span>
+                    {activeChannel && (
+                      <button
+                        onClick={() => setActiveChannel(null)}
+                        className="text-primary hover:underline"
+                      >
+                        Hapus filter
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {filtered.map((v, i) => (
+                      <DramaCard key={v.videoId} video={v} index={i} />
+                    ))}
+                  </div>
+                </>
+              )}
 
-          {videos.isError && (
-            <div className="mt-10 rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-center">
-              <p className="text-destructive">
-                Gagal memuat video. Coba refresh.
-              </p>
+              {!videos.isLoading &&
+                filtered.length === 0 &&
+                (channels.data?.length ?? 0) > 0 && (
+                  <div className="py-20 text-center text-foreground/60">
+                    Tidak ada video yang cocok.
+                  </div>
+                )}
             </div>
-          )}
-
-          {filtered.length > 0 && (
-            <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filtered.map((v, idx) => (
-                <motion.div
-                  key={v.videoId}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.4) }}
-                >
-                  <Link
-                    href={`/drama/${v.videoId}`}
-                    className="group block overflow-hidden rounded-lg border border-border/60 bg-card/40 transition-colors hover:border-primary/40"
-                    data-testid={`link-drama-${v.videoId}`}
-                  >
-                    <div className="relative aspect-video overflow-hidden bg-black">
-                      <img
-                        src={v.thumbnailUrl}
-                        alt={v.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      {v.hasOverride && (
-                        <span className="absolute left-2 top-2 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
-                          ID
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h2 className="line-clamp-2 text-sm font-semibold leading-snug">
-                        {v.title}
-                      </h2>
-                      <div className="mt-2 flex items-center justify-between text-xs text-foreground/60">
-                        <span className="truncate pr-2">{v.channelName}</span>
-                        <span className="shrink-0">{formatRelative(v.publishedAt)}</span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          )}
-
-          {!videos.isLoading && filtered.length === 0 && (channels.data?.length ?? 0) > 0 && (
-            <div className="mt-16 text-center text-foreground/60">
-              Tidak ada video yang cocok.
-            </div>
-          )}
+          </div>
         </div>
       </section>
     </>
