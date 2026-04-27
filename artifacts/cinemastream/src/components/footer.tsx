@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Tv2 } from "lucide-react";
+import { Tv2, Languages } from "lucide-react";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -9,7 +9,7 @@ export function Footer() {
       role="contentinfo"
     >
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12 py-14">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
           <div className="col-span-2">
             <Link
               href="/"
@@ -25,9 +25,17 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 max-w-md text-sm text-muted-foreground leading-relaxed">
-              Tempat nonton drama China dan mini series Mandarin terbaru.
-              Judul otomatis dialihbahasakan ke Indonesia, update tiap kreator
-              upload episode baru.
+              Agregator drama China dan mini series Mandarin dari channel
+              YouTube pilihan. Judul otomatis dialihbahasakan ke Indonesia.
+              Semua video di-embed dari YouTube — kami tidak menyimpan video
+              apa pun.
+            </p>
+            <p className="mt-4 inline-flex items-start gap-2 rounded-md bg-card/60 border border-border/60 px-3 py-2 text-xs text-foreground/70 max-w-md">
+              <Languages className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+              <span>
+                Judul Indonesia dihasilkan AI penerjemah. Judul asli kreator
+                tersedia di setiap halaman drama.
+              </span>
             </p>
           </div>
 
@@ -63,6 +71,50 @@ export function Footer() {
                   Tentang Kami
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="hover:text-foreground transition-colors"
+                  data-testid="link-footer-contact"
+                >
+                  Kontak
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-medium text-foreground mb-4 text-sm tracking-wide uppercase">
+              Legal
+            </h3>
+            <ul className="space-y-2.5 text-sm text-muted-foreground">
+              <li>
+                <Link
+                  href="/privacy"
+                  className="hover:text-foreground transition-colors"
+                  data-testid="link-footer-privacy"
+                >
+                  Kebijakan Privasi
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="hover:text-foreground transition-colors"
+                  data-testid="link-footer-terms"
+                >
+                  Syarat & Ketentuan
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dmca"
+                  className="hover:text-foreground transition-colors"
+                  data-testid="link-footer-dmca"
+                >
+                  DMCA
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -72,9 +124,8 @@ export function Footer() {
             </h3>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               <li>Update otomatis tiap 5 menit</li>
-              <li>Judul Mandarin → Bahasa Indonesia</li>
               <li>Streaming via YouTube embed</li>
-              <li>Tanpa akun, tanpa iklan</li>
+              <li>Tanpa akun, tanpa pop-up</li>
             </ul>
           </div>
         </div>
@@ -82,7 +133,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t border-border/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>
             © {year} CinemaStream. Semua video di-embed dari YouTube. Hak cipta
-            milik kreator masing-masing.
+            tetap milik kreator masing-masing.
           </p>
           <p className="font-mono tracking-wide">Dibuat untuk pencinta drama</p>
         </div>

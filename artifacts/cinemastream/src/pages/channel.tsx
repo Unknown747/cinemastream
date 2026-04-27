@@ -11,6 +11,8 @@ import {
 import { Seo } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { DramaCard } from "@/components/drama-card";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { AdSlot } from "@/components/ad-slot";
 
 export default function ChannelPage() {
   const [, params] = useRoute<{ channelId: string }>("/channel/:channelId");
@@ -154,6 +156,14 @@ export default function ChannelPage() {
         )}
 
         <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12">
+          <Breadcrumbs
+            items={[
+              { label: "Beranda", href: "/" },
+              { label: "Drama", href: "/drama" },
+              { label: channel.name },
+            ]}
+            className="mb-3"
+          />
           <Link
             href="/drama"
             className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-foreground"
@@ -273,8 +283,35 @@ export default function ChannelPage() {
                   />
                 ))}
               </div>
+
+              <AdSlot
+                slot={import.meta.env.VITE_ADSENSE_SLOT_CHANNEL_BOTTOM}
+                format="auto"
+                className="mt-10"
+              />
             </>
           )}
+        </div>
+      </section>
+
+      <section className="border-t border-border/40 bg-card/20 py-10">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 text-sm text-foreground/70 leading-relaxed">
+          <p>
+            Halaman ini mengkurasi seluruh drama yang dirilis channel{" "}
+            <strong className="text-foreground">{channel.name}</strong> di
+            YouTube. Video di-embed langsung dari channel resminya — kami
+            tidak menyimpan atau mengunggah ulang video apa pun. Hak cipta
+            sepenuhnya milik kreator. Untuk dukung kreator, klik{" "}
+            <a
+              href={`https://www.youtube.com/channel/${channel.channelId}`}
+              target="_blank"
+              rel="noopener noreferrer external"
+              className="text-primary hover:underline"
+            >
+              subscribe channel-nya di YouTube
+            </a>
+            .
+          </p>
         </div>
       </section>
     </>

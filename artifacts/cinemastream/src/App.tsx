@@ -14,6 +14,10 @@ import DramaPage from "@/pages/drama";
 import DramaDetailPage from "@/pages/drama-detail";
 import ChannelPage from "@/pages/channel";
 import AdminPage from "@/pages/admin";
+import PrivacyPage from "@/pages/legal/privacy";
+import TermsPage from "@/pages/legal/terms";
+import DmcaPage from "@/pages/legal/dmca";
+import ContactPage from "@/pages/legal/contact";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -30,6 +34,10 @@ function Router() {
       <Route path="/channel/:channelId" component={ChannelPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/about" component={AboutPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/dmca" component={DmcaPage} />
+      <Route path="/contact" component={ContactPage} />
       <Route component={NotFound} />
     </Switch>
   );

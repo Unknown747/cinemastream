@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, Calendar } from "lucide-react";
 import { useListAllVideos, getListAllVideosQueryKey } from "@workspace/api-client-react";
 import { Seo } from "@/components/seo";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { YouTubeAttribution } from "@/components/youtube-attribution";
+import { AdSlot } from "@/components/ad-slot";
 
 export default function DramaDetailPage() {
   const [, params] = useRoute<{ videoId: string }>("/drama/:videoId");
@@ -109,6 +112,15 @@ export default function DramaDetailPage() {
 
       <section className="pt-24 pb-16">
         <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-12">
+          <Breadcrumbs
+            items={[
+              { label: "Beranda", href: "/" },
+              { label: "Drama", href: "/drama" },
+              { label: video.channelName, href: `/channel/${video.channelId}` },
+              { label: video.title },
+            ]}
+            className="mb-4"
+          />
           <Link
             href="/drama"
             className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-foreground"
@@ -157,12 +169,29 @@ export default function DramaDetailPage() {
                 )}
               </div>
 
-              <div className="mt-6 whitespace-pre-wrap text-sm text-foreground/80">
-                {video.description}
+              <YouTubeAttribution
+                videoId={video.videoId}
+                channelName={video.channelName}
+                channelId={video.channelId}
+                hasOverride={video.hasOverride}
+              />
+
+              <AdSlot slot={import.meta.env.VITE_ADSENSE_SLOT_IN_ARTICLE} format="fluid" layout="in-article" />
+
+              <h2 className="mt-8 font-serif text-xl">Tentang episode ini</h2>
+              <div className="mt-3 whitespace-pre-wrap text-sm text-foreground/80 leading-relaxed">
+                {video.description || (
+                  <span className="text-foreground/50">
+                    Belum ada deskripsi dari kreator. Silakan tonton video di
+                    atas untuk sinopsis dan trailer langsung dari{" "}
+                    {video.channelName}.
+                  </span>
+                )}
               </div>
             </div>
 
             <aside>
+              <AdSlot slot={import.meta.env.VITE_ADSENSE_SLOT_SIDEBAR} format="auto" className="mt-0 mb-6" />
               <h2 className="font-serif text-xl">Episode lain</h2>
               <div className="mt-4 flex flex-col gap-3">
                 {related.length === 0 && (

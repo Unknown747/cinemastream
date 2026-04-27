@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Seo } from "@/components/seo";
 import { DramaCard } from "@/components/drama-card";
 import { SectionHeading } from "@/components/section-heading";
+import { AdSlot } from "@/components/ad-slot";
 
 const FEATURES = [
   {
@@ -356,6 +357,10 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12">
+        <AdSlot slot={import.meta.env.VITE_ADSENSE_SLOT_HOME_TOP} format="auto" />
+      </div>
 
       {/* Top 10 — Netflix-style numbered ranking */}
       {top10.length >= 3 && (

@@ -1,0 +1,4 @@
+# Replace pub-XXXXXXXXXXXXXXXX with your AdSense publisher ID
+# Format: <ad-system>, <publisher-id>, <relationship>, <certification-id>
+# Reference: https://iabtechlab.com/ads-txt/
+google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0

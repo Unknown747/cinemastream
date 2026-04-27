@@ -63,3 +63,32 @@ Visit `/admin` in the running app. Paste a channel handle (e.g. `@miniseries_mag
 or a full channel URL. The server resolves the channel ID via the channel
 page, persists it, and starts pulling its latest videos. To localize a
 title, click "Edit Judul" on any video in the admin list.
+
+## Anti-AGC + SEO safeguards
+
+To avoid Google penalties for thin/auto-generated content:
+- Each drama detail page shows a `YouTubeAttribution` block with the original
+  YouTube source link and an AI translation disclosure.
+- Footer permanently displays the embed/translation disclosure.
+- Legal pages live under `/privacy`, `/terms`, `/dmca`, `/contact`.
+- Every page has Breadcrumb JSON-LD, original VideoObject schema points to the
+  YouTube source, and rel="external" is used on YouTube links.
+- Sitemap (`/api/sitemap-drama.xml`) only lists URLs that resolve to real
+  content (channels with videos).
+
+## Google AdSense (monetization)
+
+Ad infrastructure is configurable via Vite env vars (set in Deployments →
+Environment, **prefixed `VITE_`** so they're inlined at build time):
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_ADSENSE_CLIENT` | Your AdSense client ID, e.g. `ca-pub-1234567890123456` |
+| `VITE_ADSENSE_SLOT_HOME_TOP` | Slot ID for the home page mid-section banner |
+| `VITE_ADSENSE_SLOT_IN_ARTICLE` | In-article slot below the player |
+| `VITE_ADSENSE_SLOT_SIDEBAR` | Sidebar slot on drama detail pages |
+| `VITE_ADSENSE_SLOT_CHANNEL_BOTTOM` | Bottom-of-grid slot on channel pages |
+
+If `VITE_ADSENSE_CLIENT` is unset, ads render nothing in production (and
+show a placeholder in dev). Update `public/ads.txt` with your real publisher
+ID before submitting the site to AdSense for review.

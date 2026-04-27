@@ -8,12 +8,17 @@ const sitemapPath = resolve(__dirname, "..", "public", "sitemap.xml");
 const today = new Date().toISOString().slice(0, 10);
 const base = process.env.SITE_URL || "https://cinemastream.app";
 
-// Drama-focused static URLs only. Per-episode URLs are served dynamically by
-// the API at /api/sitemap-drama.xml because they change as channels upload.
+// Static URLs only. Per-channel and per-episode URLs are served dynamically
+// by the API at /api/sitemap-drama.xml because they change as channels add
+// content.
 const urls = [
   { loc: `${base}/`, changefreq: "daily", priority: "1.0" },
   { loc: `${base}/drama`, changefreq: "hourly", priority: "0.9" },
-  { loc: `${base}/about`, changefreq: "monthly", priority: "0.5" },
+  { loc: `${base}/about`, changefreq: "monthly", priority: "0.6" },
+  { loc: `${base}/contact`, changefreq: "monthly", priority: "0.4" },
+  { loc: `${base}/privacy`, changefreq: "yearly", priority: "0.3" },
+  { loc: `${base}/terms`, changefreq: "yearly", priority: "0.3" },
+  { loc: `${base}/dmca`, changefreq: "yearly", priority: "0.3" },
 ];
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
