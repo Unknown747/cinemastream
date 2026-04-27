@@ -9,15 +9,77 @@ import {
 import { ListChannelVideosResponseItem } from "@workspace/api-zod";
 import { fetchChannelVideosCached, type RssVideo } from "../lib/youtube";
 import { logger } from "../lib/logger";
+import {
+  containsChinese,
+  translateChineseToIndonesian,
+  isTranslatorAvailable,
+} from "../lib/translator";
 
 const router: IRouter = Router();
+
+const MAX_AUTO_TRANSLATIONS_PER_REQUEST = 8;
+
+async function autoTranslateAndPersist(
+  videos: RssVideo[],
+  existing: Map<string, VideoOverrideRow>,
+): Promise<Map<string, VideoOverrideRow>> {
+  if (!isTranslatorAvailable()) return existing;
+
+  const targets = videos.filter((v) => {
+    const o = existing.get(v.videoId);
+    if (o?.title?.trim()) return false;
+    return containsChinese(v.title);
+  });
+
+  if (targets.length === 0) return existing;
+
+  const slice = targets.slice(0, MAX_AUTO_TRANSLATIONS_PER_REQUEST);
+
+  const results = await Promise.all(
+    slice.map(async (v) => {
+      const translation = await translateChineseToIndonesian(v.title);
+      if (!translation) return null;
+      const existingDesc = existing.get(v.videoId)?.description ?? null;
+      try {
+        const inserted = await db
+          .insert(videoOverridesTable)
+          .values({
+            videoId: v.videoId,
+            title: translation,
+            description: existingDesc,
+          })
+          .onConflictDoUpdate({
+            target: videoOverridesTable.videoId,
+            set: { title: translation },
+          })
+          .returning();
+        return inserted[0] ?? null;
+      } catch (err) {
+        logger.warn(
+          { err, videoId: v.videoId },
+          "failed to persist auto translation",
+        );
+        return null;
+      }
+    }),
+  );
+
+  const next = new Map(existing);
+  for (const row of results) {
+    if (row) next.set(row.videoId, row);
+  }
+  return next;
+}
 
 async function buildVideos(rss: RssVideo[]): Promise<unknown[]> {
   if (rss.length === 0) return [];
   const overrides = await db.select().from(videoOverridesTable);
-  const map = new Map<string, VideoOverrideRow>(
+  let map = new Map<string, VideoOverrideRow>(
     overrides.map((o) => [o.videoId, o]),
   );
+
+  map = await autoTranslateAndPersist(rss, map);
+
   return rss.map((v) => {
     const o = map.get(v.videoId);
     const title = o?.title?.trim() || v.title;
@@ -45,7 +107,8 @@ router.get("/channels/:id/videos", async (req, res) => {
       .from(channelsTable)
       .where(eq(channelsTable.id, id))
       .limit(1);
-    if (rows.length === 0) return res.status(404).json({ error: "Channel not found" });
+    if (rows.length === 0)
+      return res.status(404).json({ error: "Channel not found" });
     const videos = await fetchChannelVideosCached(rows[0].channelId);
     const enriched = await buildVideos(videos);
     res.json(enriched);
