@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "HsCfYxu96A8Kk4_QsVPPW"
+uri = "file://INSTALASI.md"
+type = "text"
+title = "Panduan Instalasi VPS & XAMPP"
