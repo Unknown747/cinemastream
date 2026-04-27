@@ -12,10 +12,13 @@ import {
   Flame,
   Star,
   Radio,
+  Newspaper,
 } from "lucide-react";
 import {
   useListAllVideos,
+  useListArticles,
   useListChannels,
+  getListArticlesQueryKey,
   getListAllVideosQueryKey,
   getListChannelsQueryKey,
 } from "@workspace/api-client-react";
@@ -507,6 +510,8 @@ export default function HomePage() {
         </section>
       )}
 
+      <LatestArticles />
+
       {/* Empty state when no channels yet */}
       {!videos.isLoading && latest.length === 0 && (
         <section className="py-20" aria-labelledby="empty-heading">
@@ -613,5 +618,83 @@ export default function HomePage() {
         </div>
       </section>
     </>
+  );
+}
+
+function LatestArticles() {
+  const { data, isLoading } = useListArticles(undefined, {
+    query: { queryKey: getListArticlesQueryKey(), staleTime: 60_000 },
+  });
+  const articles = (data ?? []).slice(0, 3);
+  if (isLoading || articles.length === 0) return null;
+
+  return (
+    <section
+      className="py-16 sm:py-20 border-t border-border/40"
+      aria-labelledby="articles-heading"
+    >
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12">
+        <SectionHeading
+          eyebrow="Editorial"
+          eyebrowIcon={Newspaper}
+          title="Berita & artikel terbaru"
+          description="Ulasan, panduan tonton, dan berita seputar drama China dari tim editorial kami."
+          href="/blog"
+          hrefLabel="Lihat semua artikel"
+        />
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {articles.map((a, i) => (
+            <motion.article
+              key={a.id}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.4, delay: i * 0.06 }}
+            >
+              <Link
+                href={`/blog/${a.slug}`}
+                className="group block overflow-hidden rounded-xl border border-border/60 bg-card/30 transition hover:border-primary/40"
+                data-testid={`link-home-article-${a.slug}`}
+              >
+                {a.coverImage ? (
+                  <div className="aspect-[16/9] overflow-hidden bg-black">
+                    <img
+                      src={a.coverImage}
+                      alt={a.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-[16/9] bg-gradient-to-br from-primary/20 to-card" />
+                )}
+                <div className="p-5">
+                  <h3 className="font-serif text-lg leading-snug group-hover:text-primary transition-colors">
+                    {a.title}
+                  </h3>
+                  <p className="mt-2 line-clamp-2 text-sm text-foreground/70 leading-relaxed">
+                    {a.excerpt}
+                  </p>
+                  <p className="mt-3 text-xs text-foreground/50">
+                    {a.author}
+                    {a.publishedAt && (
+                      <>
+                        {" • "}
+                        {new Date(a.publishedAt).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </Link>
+            </motion.article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

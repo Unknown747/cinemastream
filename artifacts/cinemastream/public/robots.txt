@@ -5,3 +5,6 @@ Disallow: /admin/*
 
 Sitemap: /sitemap.xml
 Sitemap: /api/sitemap-drama.xml
+
+# RSS feed (drama episodes + editorial articles)
+# /api/feed.xml

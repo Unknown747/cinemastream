@@ -13,6 +13,8 @@ import AboutPage from "@/pages/about";
 import DramaPage from "@/pages/drama";
 import DramaDetailPage from "@/pages/drama-detail";
 import ChannelPage from "@/pages/channel";
+import BlogPage from "@/pages/blog";
+import BlogDetailPage from "@/pages/blog-detail";
 import AdminPage from "@/pages/admin";
 import PrivacyPage from "@/pages/legal/privacy";
 import TermsPage from "@/pages/legal/terms";
@@ -32,6 +34,8 @@ function Router() {
       <Route path="/drama" component={DramaPage} />
       <Route path="/drama/:videoId" component={DramaDetailPage} />
       <Route path="/channel/:channelId" component={ChannelPage} />
+      <Route path="/blog" component={BlogPage} />
+      <Route path="/blog/:slug" component={BlogDetailPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/privacy" component={PrivacyPage} />

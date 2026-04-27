@@ -14,6 +14,7 @@ const base = process.env.SITE_URL || "https://cinemastream.app";
 const urls = [
   { loc: `${base}/`, changefreq: "daily", priority: "1.0" },
   { loc: `${base}/drama`, changefreq: "hourly", priority: "0.9" },
+  { loc: `${base}/blog`, changefreq: "daily", priority: "0.8" },
   { loc: `${base}/about`, changefreq: "monthly", priority: "0.6" },
   { loc: `${base}/contact`, changefreq: "monthly", priority: "0.4" },
   { loc: `${base}/privacy`, changefreq: "yearly", priority: "0.3" },

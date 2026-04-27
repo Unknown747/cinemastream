@@ -1,7 +1,19 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Pencil, Save, X, Loader2, Check, Sparkles } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Pencil,
+  Save,
+  X,
+  Loader2,
+  Check,
+  Sparkles,
+  FileText,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import {
   useListChannels,
   useAddChannel,
@@ -10,9 +22,16 @@ import {
   useUpsertVideoOverride,
   useRemoveVideoOverride,
   useTranslateText,
+  useListArticles,
+  useCreateArticle,
+  useUpdateArticle,
+  useDeleteArticle,
   getListChannelsQueryKey,
   getListAllVideosQueryKey,
+  getListArticlesQueryKey,
 } from "@workspace/api-client-react";
+import { ListArticlesResponseItem } from "@workspace/api-zod";
+import type { z } from "zod/v4";
 import { Seo } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 
@@ -399,8 +418,317 @@ export default function AdminPage() {
             </p>
             <VideoOverrideList />
           </section>
+
+          <section className="mt-12">
+            <div className="flex items-end justify-between mb-3">
+              <h2 className="font-serif text-2xl">Artikel & Berita</h2>
+            </div>
+            <p className="mb-4 text-sm text-foreground/60">
+              Tulis artikel editorial original (ulasan, panduan, berita drama)
+              untuk meningkatkan kredibilitas SEO. Format Markdown didukung.
+            </p>
+            <ArticleAdmin />
+          </section>
         </div>
       </section>
     </>
+  );
+}
+
+type Article = z.infer<typeof ListArticlesResponseItem>;
+
+function emptyArticle() {
+  return {
+    slug: "",
+    title: "",
+    excerpt: "",
+    content: "",
+    coverImage: "",
+    channelId: "",
+    status: "draft" as "draft" | "published",
+    author: "Tim CinemaStream",
+  };
+}
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 80);
+}
+
+function ArticleAdmin() {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState<Article | null>(null);
+  const [draft, setDraft] = useState(emptyArticle());
+  const [error, setError] = useState<string | null>(null);
+
+  const list = useListArticles(
+    { includeDrafts: true },
+    {
+      query: {
+        queryKey: getListArticlesQueryKey({ includeDrafts: true }),
+        staleTime: 10_000,
+      },
+    },
+  );
+  const channels = useListChannels({
+    query: { queryKey: getListChannelsQueryKey(), staleTime: 60_000 },
+  });
+
+  const create = useCreateArticle({
+    mutation: {
+      onSuccess: () => {
+        setDraft(emptyArticle());
+        setError(null);
+        qc.invalidateQueries({ queryKey: getListArticlesQueryKey({ includeDrafts: true }) });
+        qc.invalidateQueries({ queryKey: getListArticlesQueryKey() });
+      },
+      onError: (err: unknown) =>
+        setError(err instanceof Error ? err.message : "Gagal menyimpan artikel"),
+    },
+  });
+  const update = useUpdateArticle({
+    mutation: {
+      onSuccess: () => {
+        setEditing(null);
+        setError(null);
+        qc.invalidateQueries({ queryKey: getListArticlesQueryKey({ includeDrafts: true }) });
+        qc.invalidateQueries({ queryKey: getListArticlesQueryKey() });
+      },
+      onError: (err: unknown) =>
+        setError(err instanceof Error ? err.message : "Gagal menyimpan artikel"),
+    },
+  });
+  const remove = useDeleteArticle({
+    mutation: {
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: getListArticlesQueryKey({ includeDrafts: true }) });
+        qc.invalidateQueries({ queryKey: getListArticlesQueryKey() });
+      },
+    },
+  });
+
+  const startEdit = (a: Article) => {
+    setEditing(a);
+    setDraft({
+      slug: a.slug,
+      title: a.title,
+      excerpt: a.excerpt,
+      content: a.content,
+      coverImage: a.coverImage ?? "",
+      channelId: a.channelId ?? "",
+      status: a.status,
+      author: a.author,
+    });
+  };
+
+  const submit = () => {
+    if (!draft.title.trim() || !draft.excerpt.trim() || !draft.content.trim()) {
+      setError("Judul, ringkasan, dan isi wajib diisi.");
+      return;
+    }
+    const payload = {
+      slug: draft.slug.trim() || slugify(draft.title),
+      title: draft.title.trim(),
+      excerpt: draft.excerpt.trim(),
+      content: draft.content,
+      coverImage: draft.coverImage.trim() || null,
+      channelId: draft.channelId.trim() || null,
+      status: draft.status,
+      author: draft.author.trim() || "Tim CinemaStream",
+    };
+    if (editing) {
+      update.mutate({ id: editing.id, data: payload });
+    } else {
+      create.mutate({ data: payload });
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditing(null);
+    setDraft(emptyArticle());
+    setError(null);
+  };
+
+  const isPending = create.isPending || update.isPending;
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-border/60 bg-card/40 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <FileText className="h-4 w-4 text-primary" />
+          <h3 className="font-medium">
+            {editing ? `Edit: ${editing.title}` : "Tulis artikel baru"}
+          </h3>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <input
+            value={draft.title}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDraft((d) => ({
+                ...d,
+                title: v,
+                slug: editing ? d.slug : slugify(v),
+              }));
+            }}
+            placeholder="Judul artikel"
+            className="h-10 rounded-md border border-border/60 bg-background px-4 text-sm sm:col-span-2"
+            data-testid="input-article-title"
+          />
+          <input
+            value={draft.slug}
+            onChange={(e) =>
+              setDraft((d) => ({ ...d, slug: slugify(e.target.value) }))
+            }
+            placeholder="slug-url-artikel"
+            className="h-10 rounded-md border border-border/60 bg-background px-4 text-sm font-mono"
+            data-testid="input-article-slug"
+          />
+          <input
+            value={draft.author}
+            onChange={(e) => setDraft((d) => ({ ...d, author: e.target.value }))}
+            placeholder="Penulis"
+            className="h-10 rounded-md border border-border/60 bg-background px-4 text-sm"
+            data-testid="input-article-author"
+          />
+          <input
+            value={draft.coverImage}
+            onChange={(e) => setDraft((d) => ({ ...d, coverImage: e.target.value }))}
+            placeholder="URL gambar cover (opsional)"
+            className="h-10 rounded-md border border-border/60 bg-background px-4 text-sm sm:col-span-2"
+            data-testid="input-article-cover"
+          />
+          <select
+            value={draft.channelId}
+            onChange={(e) => setDraft((d) => ({ ...d, channelId: e.target.value }))}
+            className="h-10 rounded-md border border-border/60 bg-background px-4 text-sm"
+            data-testid="select-article-channel"
+          >
+            <option value="">Tanpa channel terkait</option>
+            {channels.data?.map((c) => (
+              <option key={c.channelId} value={c.channelId}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={draft.status}
+            onChange={(e) =>
+              setDraft((d) => ({
+                ...d,
+                status: e.target.value as "draft" | "published",
+              }))
+            }
+            className="h-10 rounded-md border border-border/60 bg-background px-4 text-sm"
+            data-testid="select-article-status"
+          >
+            <option value="draft">Draf</option>
+            <option value="published">Publikasikan</option>
+          </select>
+          <textarea
+            value={draft.excerpt}
+            onChange={(e) => setDraft((d) => ({ ...d, excerpt: e.target.value }))}
+            placeholder="Ringkasan singkat (untuk SEO meta description & kartu artikel, ~160 karakter)"
+            rows={2}
+            className="rounded-md border border-border/60 bg-background px-4 py-2 text-sm sm:col-span-2"
+            data-testid="textarea-article-excerpt"
+          />
+          <textarea
+            value={draft.content}
+            onChange={(e) => setDraft((d) => ({ ...d, content: e.target.value }))}
+            placeholder={`# Judul artikel\n\nTulis isi artikel di sini menggunakan **Markdown**.\n\n- Daftar\n- Item kedua\n\n[Link ke channel](/channel/UCxxxx)`}
+            rows={12}
+            className="rounded-md border border-border/60 bg-background px-4 py-3 text-sm font-mono leading-relaxed sm:col-span-2"
+            data-testid="textarea-article-content"
+          />
+        </div>
+        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button onClick={submit} disabled={isPending} data-testid="button-save-article">
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            <span className="ml-2">
+              {editing ? "Simpan perubahan" : "Simpan artikel"}
+            </span>
+          </Button>
+          {editing && (
+            <Button variant="ghost" onClick={cancelEdit} data-testid="button-cancel-article">
+              <X className="h-4 w-4" />
+              <span className="ml-2">Batal edit</span>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 font-medium text-sm uppercase tracking-wider text-foreground/60">
+          Daftar artikel
+        </h3>
+        {list.isLoading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        ) : (list.data ?? []).length === 0 ? (
+          <p className="text-sm text-foreground/60">Belum ada artikel.</p>
+        ) : (
+          <ul className="divide-y divide-border/60 rounded-md border border-border/60 bg-card/40">
+            {(list.data ?? []).map((a) => (
+              <li
+                key={a.id}
+                className="flex items-center justify-between gap-4 p-4"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    {a.status === "published" ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                        <Eye className="h-3 w-3" />
+                        Publik
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold text-foreground/60">
+                        <EyeOff className="h-3 w-3" />
+                        Draf
+                      </span>
+                    )}
+                    <p className="truncate text-sm font-medium">{a.title}</p>
+                  </div>
+                  <p className="mt-1 truncate text-xs text-foreground/50 font-mono">
+                    /blog/{a.slug}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => startEdit(a)}
+                    data-testid={`button-edit-article-${a.slug}`}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm(`Hapus artikel "${a.title}"?`)) {
+                        remove.mutate({ id: a.id });
+                      }
+                    }}
+                    data-testid={`button-delete-article-${a.slug}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }

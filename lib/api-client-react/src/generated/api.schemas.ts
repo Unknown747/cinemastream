@@ -62,3 +62,53 @@ export interface TranslateResult {
   /** Natural Indonesian translation */
   translation: string;
 }
+
+export type ArticleStatus = (typeof ArticleStatus)[keyof typeof ArticleStatus];
+
+export const ArticleStatus = {
+  draft: "draft",
+  published: "published",
+} as const;
+
+export interface Article {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  /** Markdown content */
+  content: string;
+  coverImage?: string | null;
+  channelId?: string | null;
+  status: ArticleStatus;
+  author: string;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type UpsertArticleInputStatus =
+  (typeof UpsertArticleInputStatus)[keyof typeof UpsertArticleInputStatus];
+
+export const UpsertArticleInputStatus = {
+  draft: "draft",
+  published: "published",
+} as const;
+
+export interface UpsertArticleInput {
+  /** @minLength 1 */
+  slug: string;
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  excerpt: string;
+  /** @minLength 1 */
+  content: string;
+  coverImage?: string | null;
+  channelId?: string | null;
+  status: UpsertArticleInputStatus;
+  author?: string;
+}
+
+export type ListArticlesParams = {
+  includeDrafts?: boolean;
+};

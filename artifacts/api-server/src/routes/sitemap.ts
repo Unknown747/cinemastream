@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, channelsTable } from "@workspace/db";
+import { eq, desc } from "drizzle-orm";
+import { db, channelsTable, articlesTable } from "@workspace/db";
 import { fetchChannelVideosCached } from "../lib/youtube";
 import { logger } from "../lib/logger";
 
@@ -30,8 +31,15 @@ router.get("/sitemap-drama.xml", async (req, res) => {
       await Promise.all(channels.map((c) => fetchChannelVideosCached(c.channelId)))
     ).flat();
 
+    const articles = await db
+      .select()
+      .from(articlesTable)
+      .where(eq(articlesTable.status, "published"))
+      .orderBy(desc(articlesTable.publishedAt));
+
     const urls: { loc: string; lastmod?: string }[] = [
       { loc: `${origin}/drama` },
+      { loc: `${origin}/blog` },
     ];
     for (const c of channels) {
       urls.push({ loc: `${origin}/channel/${c.channelId}` });
@@ -40,6 +48,12 @@ router.get("/sitemap-drama.xml", async (req, res) => {
       urls.push({
         loc: `${origin}/drama/${v.videoId}`,
         lastmod: v.publishedAt,
+      });
+    }
+    for (const a of articles) {
+      urls.push({
+        loc: `${origin}/blog/${a.slug}`,
+        lastmod: (a.publishedAt ?? a.updatedAt).toISOString(),
       });
     }
 

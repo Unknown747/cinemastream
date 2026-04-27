@@ -7,10 +7,15 @@
  */
 
 export * from "./addChannelInput";
+export * from "./article";
+export * from "./articleStatus";
 export * from "./channel";
 export * from "./healthStatus";
+export * from "./listArticlesParams";
 export * from "./translateInput";
 export * from "./translateResult";
+export * from "./upsertArticleInput";
+export * from "./upsertArticleInputStatus";
 export * from "./upsertOverrideInput";
 export * from "./video";
 export * from "./videoOverride";

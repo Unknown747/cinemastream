@@ -18,6 +18,8 @@ tags:
     description: Localized titles/descriptions for individual videos
   - name: translate
     description: AI translation utilities
+  - name: articles
+    description: Editorial articles (blog) with markdown content
 paths:
   /healthz:
     get:
@@ -166,6 +168,100 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TranslateResult"
+  /articles:
+    get:
+      operationId: listArticles
+      tags: [articles]
+      summary: List articles (published only by default)
+      parameters:
+        - name: includeDrafts
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Article"
+    post:
+      operationId: createArticle
+      tags: [articles]
+      summary: Create a new article
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertArticleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+  /articles/{slug}:
+    get:
+      operationId: getArticle
+      tags: [articles]
+      summary: Get a single article by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+        "404":
+          description: Not found
+  /articles/{id}/by-id:
+    put:
+      operationId: updateArticle
+      tags: [articles]
+      summary: Update an article by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertArticleInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+    delete:
+      operationId: deleteArticle
+      tags: [articles]
+      summary: Delete an article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content
 components:
   schemas:
     HealthStatus:
@@ -273,3 +369,75 @@ components:
           type: string
           description: Natural Indonesian translation
       required: [translation]
+    Article:
+      type: object
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        title:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+          description: Markdown content
+        coverImage:
+          type: string
+          nullable: true
+        channelId:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published]
+        author:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - slug
+        - title
+        - excerpt
+        - content
+        - status
+        - author
+        - createdAt
+        - updatedAt
+    UpsertArticleInput:
+      type: object
+      properties:
+        slug:
+          type: string
+          minLength: 1
+        title:
+          type: string
+          minLength: 1
+        excerpt:
+          type: string
+          minLength: 1
+        content:
+          type: string
+          minLength: 1
+        coverImage:
+          type: string
+          nullable: true
+        channelId:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published]
+        author:
+          type: string
+      required: [slug, title, excerpt, content, status]

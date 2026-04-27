@@ -137,3 +137,103 @@ export const TranslateTextBody = zod.object({
 export const TranslateTextResponse = zod.object({
   translation: zod.string().describe("Natural Indonesian translation"),
 });
+
+/**
+ * @summary List articles (published only by default)
+ */
+export const ListArticlesQueryParams = zod.object({
+  includeDrafts: zod.coerce.boolean().optional(),
+});
+
+export const ListArticlesResponseItem = zod.object({
+  id: zod.string(),
+  slug: zod.string(),
+  title: zod.string(),
+  excerpt: zod.string(),
+  content: zod.string().describe("Markdown content"),
+  coverImage: zod.string().nullish(),
+  channelId: zod.string().nullish(),
+  status: zod.enum(["draft", "published"]),
+  author: zod.string(),
+  publishedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListArticlesResponse = zod.array(ListArticlesResponseItem);
+
+/**
+ * @summary Create a new article
+ */
+
+export const CreateArticleBody = zod.object({
+  slug: zod.string().min(1),
+  title: zod.string().min(1),
+  excerpt: zod.string().min(1),
+  content: zod.string().min(1),
+  coverImage: zod.string().nullish(),
+  channelId: zod.string().nullish(),
+  status: zod.enum(["draft", "published"]),
+  author: zod.string().optional(),
+});
+
+/**
+ * @summary Get a single article by slug
+ */
+export const GetArticleParams = zod.object({
+  slug: zod.coerce.string(),
+});
+
+export const GetArticleResponse = zod.object({
+  id: zod.string(),
+  slug: zod.string(),
+  title: zod.string(),
+  excerpt: zod.string(),
+  content: zod.string().describe("Markdown content"),
+  coverImage: zod.string().nullish(),
+  channelId: zod.string().nullish(),
+  status: zod.enum(["draft", "published"]),
+  author: zod.string(),
+  publishedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update an article by id
+ */
+export const UpdateArticleParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateArticleBody = zod.object({
+  slug: zod.string().min(1),
+  title: zod.string().min(1),
+  excerpt: zod.string().min(1),
+  content: zod.string().min(1),
+  coverImage: zod.string().nullish(),
+  channelId: zod.string().nullish(),
+  status: zod.enum(["draft", "published"]),
+  author: zod.string().optional(),
+});
+
+export const UpdateArticleResponse = zod.object({
+  id: zod.string(),
+  slug: zod.string(),
+  title: zod.string(),
+  excerpt: zod.string(),
+  content: zod.string().describe("Markdown content"),
+  coverImage: zod.string().nullish(),
+  channelId: zod.string().nullish(),
+  status: zod.enum(["draft", "published"]),
+  author: zod.string(),
+  publishedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete an article
+ */
+export const DeleteArticleParams = zod.object({
+  id: zod.coerce.string(),
+});
