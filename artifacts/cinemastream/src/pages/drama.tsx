@@ -52,20 +52,51 @@ export default function DramaPage() {
     );
   }, [videos.data, query]);
 
+  const itemListJsonLd = useMemo(() => {
+    if (filtered.length === 0) return null;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Daftar Drama China",
+      numberOfItems: filtered.length,
+      itemListElement: filtered.slice(0, 30).map((v, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${origin}/drama/${v.videoId}`,
+        name: v.title,
+      })),
+    };
+  }, [filtered]);
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Beranda", item: "/" },
+      { "@type": "ListItem", position: 2, name: "Drama", item: "/drama" },
+    ],
+  };
+
   return (
     <>
       <Seo
-        title="Drama Series — Update Otomatis Tiap Hari | CinemaStream"
-        description="Koleksi drama China dan mini series terbaru, otomatis ter-update saat channel YouTube upload episode baru. Tonton gratis dengan judul Bahasa Indonesia."
+        title="Daftar Drama China Sub Indo — Update Otomatis | CinemaStream"
+        description="Koleksi drama China, mini drama, dan short drama Mandarin terbaru. Judul Bahasa Indonesia, update otomatis tiap channel YouTube upload episode baru."
         path="/drama"
         keywords={[
           "drama china",
           "drama mandarin",
-          "mini series",
-          "drama pendek",
-          "nonton drama",
+          "drama china sub indo",
+          "mini drama",
           "short drama",
+          "drama pendek",
+          "nonton drama china",
+          "drama china terbaru",
         ]}
+        jsonLd={
+          itemListJsonLd ? [breadcrumbJsonLd, itemListJsonLd] : breadcrumbJsonLd
+        }
       />
 
       <section className="pt-28 pb-12">

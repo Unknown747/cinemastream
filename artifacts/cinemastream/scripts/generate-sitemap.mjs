@@ -1,33 +1,29 @@
-import { writeFileSync, readFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const moviesPath = resolve(__dirname, "..", "src", "data", "movies.ts");
 const sitemapPath = resolve(__dirname, "..", "public", "sitemap.xml");
 
-const src = readFileSync(moviesPath, "utf8");
-const ids = [...src.matchAll(/id:\s*"([^"]+)"/g)].map((m) => m[1]);
-const genres = [
-  "action", "adventure", "animation", "comedy", "crime", "drama",
-  "history", "horror", "music", "romance", "sci-fi", "thriller",
-];
-
 const today = new Date().toISOString().slice(0, 10);
-const base = "https://cinemastream.app";
+const base = process.env.SITE_URL || "https://cinemastream.app";
 
+// Drama-focused static URLs only. Per-episode URLs are served dynamically by
+// the API at /api/sitemap-drama.xml because they change as channels upload.
 const urls = [
-  `${base}/`,
-  `${base}/browse`,
-  `${base}/drama`,
-  `${base}/about`,
-  ...genres.map((g) => `${base}/genre/${g}`),
-  ...ids.map((id) => `${base}/movie/${id}`),
+  { loc: `${base}/`, changefreq: "daily", priority: "1.0" },
+  { loc: `${base}/drama`, changefreq: "hourly", priority: "0.9" },
+  { loc: `${base}/about`, changefreq: "monthly", priority: "0.5" },
 ];
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")}
+${urls
+  .map(
+    (u) =>
+      `  <url><loc>${u.loc}</loc><lastmod>${today}</lastmod><changefreq>${u.changefreq}</changefreq><priority>${u.priority}</priority></url>`,
+  )
+  .join("\n")}
 </urlset>
 `;
 

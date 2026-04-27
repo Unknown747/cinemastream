@@ -53,21 +53,58 @@ export default function DramaDetailPage() {
   return (
     <>
       <Seo
-        title={`${video.title} | CinemaStream Drama`}
-        description={video.description.slice(0, 200)}
+        title={`${video.title} — Nonton Drama China Sub Indo`}
+        description={
+          video.description?.slice(0, 200) ||
+          `Tonton ${video.title} di CinemaStream. Drama China dengan judul Bahasa Indonesia, update otomatis dari channel ${video.channelName}.`
+        }
         path={`/drama/${video.videoId}`}
         ogImage={video.thumbnailUrl}
+        imageAlt={`Cuplikan ${video.title}`}
         ogType="video.other"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "VideoObject",
-          name: video.title,
-          description: video.description.slice(0, 500),
-          thumbnailUrl: video.thumbnailUrl,
-          uploadDate: video.publishedAt,
-          embedUrl: `https://www.youtube.com/embed/${video.videoId}`,
-          contentUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
-        }}
+        publishedTime={video.publishedAt}
+        keywords={[
+          "drama china",
+          "drama mandarin",
+          "drama china sub indo",
+          video.channelName,
+          "nonton drama china",
+        ]}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "VideoObject",
+            name: video.title,
+            alternateName: video.originalTitle,
+            description:
+              video.description?.slice(0, 500) ||
+              `Drama China dari channel ${video.channelName}, dengan judul Bahasa Indonesia.`,
+            thumbnailUrl: [video.thumbnailUrl],
+            uploadDate: video.publishedAt,
+            embedUrl: `https://www.youtube.com/embed/${video.videoId}`,
+            contentUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
+            inLanguage: "zh-CN",
+            isFamilyFriendly: true,
+            publisher: {
+              "@type": "Organization",
+              name: video.channelName,
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Beranda", item: "/" },
+              { "@type": "ListItem", position: 2, name: "Drama", item: "/drama" },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: video.title,
+                item: `/drama/${video.videoId}`,
+              },
+            ],
+          },
+        ]}
       />
 
       <section className="pt-24 pb-16">

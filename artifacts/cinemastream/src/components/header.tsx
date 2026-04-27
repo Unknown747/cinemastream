@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Search, Film, Menu, X } from "lucide-react";
+import { Search, Tv2, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const links = [
-  { href: "/", label: "Home" },
-  { href: "/browse", label: "Browse" },
+  { href: "/", label: "Beranda" },
   { href: "/drama", label: "Drama" },
-  { href: "/about", label: "About" },
+  { href: "/about", label: "Tentang" },
 ];
 
 export function Header() {
@@ -36,16 +35,24 @@ export function Header() {
     >
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-12">
         <div className="flex h-16 sm:h-20 items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5 group" data-testid="link-home-logo">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 group"
+            data-testid="link-home-logo"
+            aria-label="CinemaStream — Beranda"
+          >
             <div className="relative flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground transition-transform group-hover:scale-105">
-              <Film className="h-5 w-5" strokeWidth={2.25} />
+              <Tv2 className="h-5 w-5" strokeWidth={2.25} />
             </div>
             <span className="font-serif text-xl tracking-tight">
               Cinema<span className="text-primary">Stream</span>
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <nav
+            className="hidden md:flex items-center gap-1"
+            aria-label="Navigasi utama"
+          >
             {links.map((l) => {
               const active = location === l.href;
               return (
@@ -56,6 +63,7 @@ export function Header() {
                     active ? "text-primary" : "text-foreground/80 hover:text-foreground"
                   }`}
                   data-testid={`link-nav-${l.label.toLowerCase()}`}
+                  aria-current={active ? "page" : undefined}
                 >
                   {l.label}
                 </Link>
@@ -67,10 +75,10 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/browse")}
+              onClick={() => navigate("/drama")}
               className="rounded-full"
               data-testid="button-search-icon"
-              aria-label="Search films"
+              aria-label="Cari drama"
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -79,7 +87,8 @@ export function Header() {
               size="icon"
               className="md:hidden rounded-full"
               onClick={() => setOpen((o) => !o)}
-              aria-label="Toggle menu"
+              aria-label="Buka menu"
+              aria-expanded={open}
               data-testid="button-mobile-menu"
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -90,7 +99,10 @@ export function Header() {
 
       {open && (
         <div className="md:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl">
-          <nav className="mx-auto max-w-[1600px] px-4 py-3 flex flex-col gap-1">
+          <nav
+            className="mx-auto max-w-[1600px] px-4 py-3 flex flex-col gap-1"
+            aria-label="Navigasi mobile"
+          >
             {links.map((l) => (
               <Link
                 key={l.href}
