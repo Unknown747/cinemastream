@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: /sitemap.xml
+Sitemap: /api/sitemap-drama.xml

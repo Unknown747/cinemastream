@@ -4,6 +4,7 @@ import { Play, Info, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Seo } from "@/components/seo";
 import { MovieRail } from "@/components/movie-rail";
+import { DramaRail } from "@/components/drama-rail";
 import {
   movies,
   featuredMovies,
@@ -110,6 +111,11 @@ export default function HomePage() {
       )}
 
       <MovieRail title="Trending Now" subtitle="What everyone's watching" movies={trending} />
+
+      <DramaRail
+        title="Drama Series Terbaru"
+        subtitle="Episode terbaru dari channel pilihan, update otomatis"
+      />
 
       <MovieRail title="New Releases" subtitle="The latest additions" movies={newReleases} />
 

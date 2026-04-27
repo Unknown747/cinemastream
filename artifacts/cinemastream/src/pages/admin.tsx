@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Pencil, Save, X, Loader2, Check } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, X, Loader2, Check, Sparkles } from "lucide-react";
 import {
   useListChannels,
   useAddChannel,
@@ -9,6 +9,7 @@ import {
   useListAllVideos,
   useUpsertVideoOverride,
   useRemoveVideoOverride,
+  useTranslateText,
   getListChannelsQueryKey,
   getListAllVideosQueryKey,
 } from "@workspace/api-client-react";
@@ -176,6 +177,13 @@ function VideoRow({ video }: VideoRowProps) {
       },
     },
   });
+  const translate = useTranslateText({
+    mutation: {
+      onSuccess: (data) => {
+        if (data?.translation) setTitle(data.translation);
+      },
+    },
+  });
 
   return (
     <li className="flex flex-col gap-3 p-4 sm:flex-row" data-testid={`row-video-${video.videoId}`}>
@@ -225,9 +233,28 @@ function VideoRow({ video }: VideoRowProps) {
           </>
         ) : (
           <div className="flex flex-col gap-2">
-            <label className="text-xs uppercase tracking-wider text-foreground/60">
-              Judul (Bahasa Indonesia)
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs uppercase tracking-wider text-foreground/60">
+                Judul (Bahasa Indonesia)
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  translate.mutate({ data: { text: video.originalTitle } })
+                }
+                disabled={translate.isPending}
+                className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+                data-testid={`button-ai-translate-${video.videoId}`}
+                title={`Terjemahkan judul asli: ${video.originalTitle}`}
+              >
+                {translate.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3" />
+                )}
+                Terjemahkan dengan AI
+              </button>
+            </div>
             <input
               type="text"
               value={title}
@@ -235,6 +262,11 @@ function VideoRow({ video }: VideoRowProps) {
               className="rounded-md border border-border/60 bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
               data-testid={`input-title-${video.videoId}`}
             />
+            {translate.isError && (
+              <p className="text-xs text-destructive">
+                AI gagal menerjemahkan. Coba lagi.
+              </p>
+            )}
             <label className="mt-2 text-xs uppercase tracking-wider text-foreground/60">
               Deskripsi (opsional)
             </label>

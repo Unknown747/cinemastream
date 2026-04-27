@@ -13,9 +13,11 @@ videos from configured YouTube channels.
   SEO: react-helmet-async, JSON-LD (Movie + VideoObject), robots.txt, sitemap.xml.
 - **api-server** (`/api`) — Express + Drizzle.
   Routes: `/api/healthz`, `/api/channels` (CRUD), `/api/channels/:id/videos`,
-  `/api/videos`, `/api/overrides/:videoId` (PUT/DELETE).
+  `/api/videos`, `/api/overrides/:videoId` (PUT/DELETE),
+  `/api/translate` (AI Chinese→Indonesian), `/api/sitemap-drama.xml` (dynamic sitemap).
   Pulls latest videos from YouTube via the public RSS feed
   (`/feeds/videos.xml?channel_id=…`) — no API key required, in-memory cache 5 min.
+  AI translation uses gpt-5-mini via Replit AI Integrations (no key required).
 - **mockup-sandbox** (`/__mockup`) — design canvas (unused for product features).
 
 ## Database

@@ -48,3 +48,17 @@ export interface VideoOverride {
   description?: string | null;
   updatedAt: string;
 }
+
+export interface TranslateInput {
+  /**
+   * Source text to translate
+   * @minLength 1
+   * @maxLength 2000
+   */
+  text: string;
+}
+
+export interface TranslateResult {
+  /** Natural Indonesian translation */
+  translation: string;
+}

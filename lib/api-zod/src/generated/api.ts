@@ -120,3 +120,20 @@ export const UpsertVideoOverrideResponse = zod.object({
 export const RemoveVideoOverrideParams = zod.object({
   videoId: zod.coerce.string(),
 });
+
+/**
+ * @summary Translate Chinese text to natural Indonesian using AI
+ */
+export const translateTextBodyTextMax = 2000;
+
+export const TranslateTextBody = zod.object({
+  text: zod
+    .string()
+    .min(1)
+    .max(translateTextBodyTextMax)
+    .describe("Source text to translate"),
+});
+
+export const TranslateTextResponse = zod.object({
+  translation: zod.string().describe("Natural Indonesian translation"),
+});

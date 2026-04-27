@@ -16,6 +16,8 @@ tags:
     description: Videos fetched from configured channels
   - name: overrides
     description: Localized titles/descriptions for individual videos
+  - name: translate
+    description: AI translation utilities
 paths:
   /healthz:
     get:
@@ -146,6 +148,24 @@ paths:
       responses:
         "204":
           description: No content
+  /translate:
+    post:
+      operationId: translateText
+      tags: [translate]
+      summary: Translate Chinese text to natural Indonesian using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TranslateInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranslateResult"
 components:
   schemas:
     HealthStatus:
@@ -237,3 +257,19 @@ components:
           type: string
           format: date-time
       required: [videoId, updatedAt]
+    TranslateInput:
+      type: object
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Source text to translate
+      required: [text]
+    TranslateResult:
+      type: object
+      properties:
+        translation:
+          type: string
+          description: Natural Indonesian translation
+      required: [translation]
