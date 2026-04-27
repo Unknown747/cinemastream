@@ -10,6 +10,9 @@ import BrowsePage from "@/pages/browse";
 import MovieDetailPage from "@/pages/movie-detail";
 import GenrePage from "@/pages/genre";
 import AboutPage from "@/pages/about";
+import DramaPage from "@/pages/drama";
+import DramaDetailPage from "@/pages/drama-detail";
+import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -21,6 +24,9 @@ function Router() {
       <Route path="/browse" component={BrowsePage} />
       <Route path="/movie/:id" component={MovieDetailPage} />
       <Route path="/genre/:slug" component={GenrePage} />
+      <Route path="/drama" component={DramaPage} />
+      <Route path="/drama/:videoId" component={DramaDetailPage} />
+      <Route path="/admin" component={AdminPage} />
       <Route path="/about" component={AboutPage} />
       <Route component={NotFound} />
     </Switch>

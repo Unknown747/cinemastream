@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: channels
+    description: YouTube channels managed by the site
+  - name: videos
+    description: Videos fetched from configured channels
+  - name: overrides
+    description: Localized titles/descriptions for individual videos
 paths:
   /healthz:
     get:
@@ -24,6 +30,122 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /channels:
+    get:
+      operationId: listChannels
+      tags: [channels]
+      summary: List configured channels
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Channel"
+    post:
+      operationId: addChannel
+      tags: [channels]
+      summary: Add a YouTube channel by handle (e.g. @miniseries_magic)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddChannelInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+  /channels/{id}:
+    delete:
+      operationId: removeChannel
+      tags: [channels]
+      summary: Remove a configured channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content
+  /channels/{id}/videos:
+    get:
+      operationId: listChannelVideos
+      tags: [videos]
+      summary: List latest videos for a channel (with overrides applied)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Video"
+  /videos:
+    get:
+      operationId: listAllVideos
+      tags: [videos]
+      summary: List latest videos across all configured channels (with overrides applied)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Video"
+  /overrides/{videoId}:
+    put:
+      operationId: upsertVideoOverride
+      tags: [overrides]
+      summary: Set a localized title/description for a video
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertOverrideInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoOverride"
+    delete:
+      operationId: removeVideoOverride
+      tags: [overrides]
+      summary: Remove a localized override (revert to original title)
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content
 components:
   schemas:
     HealthStatus:
@@ -31,6 +153,87 @@ components:
       properties:
         status:
           type: string
+      required: [status]
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+        channelId:
+          type: string
+        handle:
+          type: string
+        name:
+          type: string
+        thumbnailUrl:
+          type: string
+          nullable: true
+      required: [id, channelId, handle, name]
+    AddChannelInput:
+      type: object
+      properties:
+        handle:
+          type: string
+          description: YouTube handle (with or without leading @) or full channel URL
+      required: [handle]
+    Video:
+      type: object
+      properties:
+        videoId:
+          type: string
+        channelId:
+          type: string
+        channelName:
+          type: string
+        title:
+          type: string
+          description: Localized title if an override exists, otherwise the original
+        originalTitle:
+          type: string
+        description:
+          type: string
+          description: Localized description if override exists, otherwise the original
+        originalDescription:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        thumbnailUrl:
+          type: string
+        hasOverride:
+          type: boolean
       required:
-        - status
-
+        - videoId
+        - channelId
+        - channelName
+        - title
+        - originalTitle
+        - description
+        - originalDescription
+        - publishedAt
+        - thumbnailUrl
+        - hasOverride
+    UpsertOverrideInput:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+    VideoOverride:
+      type: object
+      properties:
+        videoId:
+          type: string
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+      required: [videoId, updatedAt]

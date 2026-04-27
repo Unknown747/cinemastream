@@ -6,4 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./addChannelInput";
+export * from "./channel";
 export * from "./healthStatus";
+export * from "./upsertOverrideInput";
+export * from "./video";
+export * from "./videoOverride";

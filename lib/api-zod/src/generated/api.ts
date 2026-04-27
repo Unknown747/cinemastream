@@ -14,3 +14,109 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List configured channels
+ */
+export const ListChannelsResponseItem = zod.object({
+  id: zod.string(),
+  channelId: zod.string(),
+  handle: zod.string(),
+  name: zod.string(),
+  thumbnailUrl: zod.string().nullish(),
+});
+export const ListChannelsResponse = zod.array(ListChannelsResponseItem);
+
+/**
+ * @summary Add a YouTube channel by handle (e.g. @miniseries_magic)
+ */
+export const AddChannelBody = zod.object({
+  handle: zod
+    .string()
+    .describe("YouTube handle (with or without leading @) or full channel URL"),
+});
+
+/**
+ * @summary Remove a configured channel
+ */
+export const RemoveChannelParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary List latest videos for a channel (with overrides applied)
+ */
+export const ListChannelVideosParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ListChannelVideosResponseItem = zod.object({
+  videoId: zod.string(),
+  channelId: zod.string(),
+  channelName: zod.string(),
+  title: zod
+    .string()
+    .describe("Localized title if an override exists, otherwise the original"),
+  originalTitle: zod.string(),
+  description: zod
+    .string()
+    .describe(
+      "Localized description if override exists, otherwise the original",
+    ),
+  originalDescription: zod.string(),
+  publishedAt: zod.coerce.date(),
+  thumbnailUrl: zod.string(),
+  hasOverride: zod.boolean(),
+});
+export const ListChannelVideosResponse = zod.array(
+  ListChannelVideosResponseItem,
+);
+
+/**
+ * @summary List latest videos across all configured channels (with overrides applied)
+ */
+export const ListAllVideosResponseItem = zod.object({
+  videoId: zod.string(),
+  channelId: zod.string(),
+  channelName: zod.string(),
+  title: zod
+    .string()
+    .describe("Localized title if an override exists, otherwise the original"),
+  originalTitle: zod.string(),
+  description: zod
+    .string()
+    .describe(
+      "Localized description if override exists, otherwise the original",
+    ),
+  originalDescription: zod.string(),
+  publishedAt: zod.coerce.date(),
+  thumbnailUrl: zod.string(),
+  hasOverride: zod.boolean(),
+});
+export const ListAllVideosResponse = zod.array(ListAllVideosResponseItem);
+
+/**
+ * @summary Set a localized title/description for a video
+ */
+export const UpsertVideoOverrideParams = zod.object({
+  videoId: zod.coerce.string(),
+});
+
+export const UpsertVideoOverrideBody = zod.object({
+  title: zod.string().nullish(),
+  description: zod.string().nullish(),
+});
+
+export const UpsertVideoOverrideResponse = zod.object({
+  videoId: zod.string(),
+  title: zod.string().nullish(),
+  description: zod.string().nullish(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Remove a localized override (revert to original title)
+ */
+export const RemoveVideoOverrideParams = zod.object({
+  videoId: zod.coerce.string(),
+});

@@ -19,6 +19,7 @@ const base = "https://cinemastream.app";
 const urls = [
   `${base}/`,
   `${base}/browse`,
+  `${base}/drama`,
   `${base}/about`,
   ...genres.map((g) => `${base}/genre/${g}`),
   ...ids.map((id) => `${base}/movie/${id}`),

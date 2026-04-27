@@ -5,18 +5,28 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AddChannelInput,
+  Channel,
+  HealthStatus,
+  UpsertOverrideInput,
+  Video,
+  VideoOverride,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +109,581 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List configured channels
+ */
+export const getListChannelsUrl = () => {
+  return `/api/channels`;
+};
+
+export const listChannels = async (
+  options?: RequestInit,
+): Promise<Channel[]> => {
+  return customFetch<Channel[]>(getListChannelsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListChannelsQueryKey = () => {
+  return [`/api/channels`] as const;
+};
+
+export const getListChannelsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listChannels>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listChannels>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListChannelsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listChannels>>> = ({
+    signal,
+  }) => listChannels({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listChannels>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListChannelsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listChannels>>
+>;
+export type ListChannelsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List configured channels
+ */
+
+export function useListChannels<
+  TData = Awaited<ReturnType<typeof listChannels>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listChannels>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListChannelsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a YouTube channel by handle (e.g. @miniseries_magic)
+ */
+export const getAddChannelUrl = () => {
+  return `/api/channels`;
+};
+
+export const addChannel = async (
+  addChannelInput: AddChannelInput,
+  options?: RequestInit,
+): Promise<Channel> => {
+  return customFetch<Channel>(getAddChannelUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(addChannelInput),
+  });
+};
+
+export const getAddChannelMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addChannel>>,
+    TError,
+    { data: BodyType<AddChannelInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addChannel>>,
+  TError,
+  { data: BodyType<AddChannelInput> },
+  TContext
+> => {
+  const mutationKey = ["addChannel"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addChannel>>,
+    { data: BodyType<AddChannelInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return addChannel(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddChannelMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addChannel>>
+>;
+export type AddChannelMutationBody = BodyType<AddChannelInput>;
+export type AddChannelMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add a YouTube channel by handle (e.g. @miniseries_magic)
+ */
+export const useAddChannel = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addChannel>>,
+    TError,
+    { data: BodyType<AddChannelInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addChannel>>,
+  TError,
+  { data: BodyType<AddChannelInput> },
+  TContext
+> => {
+  return useMutation(getAddChannelMutationOptions(options));
+};
+
+/**
+ * @summary Remove a configured channel
+ */
+export const getRemoveChannelUrl = (id: string) => {
+  return `/api/channels/${id}`;
+};
+
+export const removeChannel = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRemoveChannelUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getRemoveChannelMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeChannel>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeChannel>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["removeChannel"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeChannel>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return removeChannel(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveChannelMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeChannel>>
+>;
+
+export type RemoveChannelMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Remove a configured channel
+ */
+export const useRemoveChannel = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeChannel>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof removeChannel>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getRemoveChannelMutationOptions(options));
+};
+
+/**
+ * @summary List latest videos for a channel (with overrides applied)
+ */
+export const getListChannelVideosUrl = (id: string) => {
+  return `/api/channels/${id}/videos`;
+};
+
+export const listChannelVideos = async (
+  id: string,
+  options?: RequestInit,
+): Promise<Video[]> => {
+  return customFetch<Video[]>(getListChannelVideosUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListChannelVideosQueryKey = (id: string) => {
+  return [`/api/channels/${id}/videos`] as const;
+};
+
+export const getListChannelVideosQueryOptions = <
+  TData = Awaited<ReturnType<typeof listChannelVideos>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listChannelVideos>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListChannelVideosQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listChannelVideos>>
+  > = ({ signal }) => listChannelVideos(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listChannelVideos>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListChannelVideosQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listChannelVideos>>
+>;
+export type ListChannelVideosQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List latest videos for a channel (with overrides applied)
+ */
+
+export function useListChannelVideos<
+  TData = Awaited<ReturnType<typeof listChannelVideos>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listChannelVideos>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListChannelVideosQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List latest videos across all configured channels (with overrides applied)
+ */
+export const getListAllVideosUrl = () => {
+  return `/api/videos`;
+};
+
+export const listAllVideos = async (
+  options?: RequestInit,
+): Promise<Video[]> => {
+  return customFetch<Video[]>(getListAllVideosUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAllVideosQueryKey = () => {
+  return [`/api/videos`] as const;
+};
+
+export const getListAllVideosQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAllVideos>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAllVideos>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAllVideosQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listAllVideos>>> = ({
+    signal,
+  }) => listAllVideos({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAllVideos>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAllVideosQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAllVideos>>
+>;
+export type ListAllVideosQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List latest videos across all configured channels (with overrides applied)
+ */
+
+export function useListAllVideos<
+  TData = Awaited<ReturnType<typeof listAllVideos>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAllVideos>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAllVideosQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Set a localized title/description for a video
+ */
+export const getUpsertVideoOverrideUrl = (videoId: string) => {
+  return `/api/overrides/${videoId}`;
+};
+
+export const upsertVideoOverride = async (
+  videoId: string,
+  upsertOverrideInput: UpsertOverrideInput,
+  options?: RequestInit,
+): Promise<VideoOverride> => {
+  return customFetch<VideoOverride>(getUpsertVideoOverrideUrl(videoId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(upsertOverrideInput),
+  });
+};
+
+export const getUpsertVideoOverrideMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof upsertVideoOverride>>,
+    TError,
+    { videoId: string; data: BodyType<UpsertOverrideInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof upsertVideoOverride>>,
+  TError,
+  { videoId: string; data: BodyType<UpsertOverrideInput> },
+  TContext
+> => {
+  const mutationKey = ["upsertVideoOverride"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof upsertVideoOverride>>,
+    { videoId: string; data: BodyType<UpsertOverrideInput> }
+  > = (props) => {
+    const { videoId, data } = props ?? {};
+
+    return upsertVideoOverride(videoId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpsertVideoOverrideMutationResult = NonNullable<
+  Awaited<ReturnType<typeof upsertVideoOverride>>
+>;
+export type UpsertVideoOverrideMutationBody = BodyType<UpsertOverrideInput>;
+export type UpsertVideoOverrideMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Set a localized title/description for a video
+ */
+export const useUpsertVideoOverride = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof upsertVideoOverride>>,
+    TError,
+    { videoId: string; data: BodyType<UpsertOverrideInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof upsertVideoOverride>>,
+  TError,
+  { videoId: string; data: BodyType<UpsertOverrideInput> },
+  TContext
+> => {
+  return useMutation(getUpsertVideoOverrideMutationOptions(options));
+};
+
+/**
+ * @summary Remove a localized override (revert to original title)
+ */
+export const getRemoveVideoOverrideUrl = (videoId: string) => {
+  return `/api/overrides/${videoId}`;
+};
+
+export const removeVideoOverride = async (
+  videoId: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRemoveVideoOverrideUrl(videoId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getRemoveVideoOverrideMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeVideoOverride>>,
+    TError,
+    { videoId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeVideoOverride>>,
+  TError,
+  { videoId: string },
+  TContext
+> => {
+  const mutationKey = ["removeVideoOverride"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeVideoOverride>>,
+    { videoId: string }
+  > = (props) => {
+    const { videoId } = props ?? {};
+
+    return removeVideoOverride(videoId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveVideoOverrideMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeVideoOverride>>
+>;
+
+export type RemoveVideoOverrideMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Remove a localized override (revert to original title)
+ */
+export const useRemoveVideoOverride = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeVideoOverride>>,
+    TError,
+    { videoId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof removeVideoOverride>>,
+  TError,
+  { videoId: string },
+  TContext
+> => {
+  return useMutation(getRemoveVideoOverrideMutationOptions(options));
+};

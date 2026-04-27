@@ -8,3 +8,43 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Channel {
+  id: string;
+  channelId: string;
+  handle: string;
+  name: string;
+  thumbnailUrl?: string | null;
+}
+
+export interface AddChannelInput {
+  /** YouTube handle (with or without leading @) or full channel URL */
+  handle: string;
+}
+
+export interface Video {
+  videoId: string;
+  channelId: string;
+  channelName: string;
+  /** Localized title if an override exists, otherwise the original */
+  title: string;
+  originalTitle: string;
+  /** Localized description if override exists, otherwise the original */
+  description: string;
+  originalDescription: string;
+  publishedAt: string;
+  thumbnailUrl: string;
+  hasOverride: boolean;
+}
+
+export interface UpsertOverrideInput {
+  title?: string | null;
+  description?: string | null;
+}
+
+export interface VideoOverride {
+  videoId: string;
+  title?: string | null;
+  description?: string | null;
+  updatedAt: string;
+}
