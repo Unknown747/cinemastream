@@ -12,6 +12,7 @@ import GenrePage from "@/pages/genre";
 import AboutPage from "@/pages/about";
 import DramaPage from "@/pages/drama";
 import DramaDetailPage from "@/pages/drama-detail";
+import ChannelPage from "@/pages/channel";
 import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/genre/:slug" component={GenrePage} />
       <Route path="/drama" component={DramaPage} />
       <Route path="/drama/:videoId" component={DramaDetailPage} />
+      <Route path="/channel/:channelId" component={ChannelPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/about" component={AboutPage} />
       <Route component={NotFound} />

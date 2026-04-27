@@ -33,6 +33,9 @@ router.get("/sitemap-drama.xml", async (req, res) => {
     const urls: { loc: string; lastmod?: string }[] = [
       { loc: `${origin}/drama` },
     ];
+    for (const c of channels) {
+      urls.push({ loc: `${origin}/channel/${c.channelId}` });
+    }
     for (const v of allVideos) {
       urls.push({
         loc: `${origin}/drama/${v.videoId}`,

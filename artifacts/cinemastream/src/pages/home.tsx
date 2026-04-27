@@ -446,7 +446,7 @@ export default function HomePage() {
                   transition={{ duration: 0.5, delay: i * 0.06 }}
                 >
                   <Link
-                    href={`/drama/${c.latest.videoId}`}
+                    href={`/channel/${c.channelId}`}
                     className="group flex items-center gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-3 transition hover:border-primary/40 hover:bg-card/70"
                     data-testid={`link-channel-${c.channelId}`}
                   >

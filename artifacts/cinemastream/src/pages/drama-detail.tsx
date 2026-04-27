@@ -139,7 +139,13 @@ export default function DramaDetailPage() {
                 {video.title}
               </h1>
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-foreground/60">
-                <span>{video.channelName}</span>
+                <Link
+                  href={`/channel/${video.channelId}`}
+                  className="text-primary hover:underline"
+                  data-testid="link-channel-from-detail"
+                >
+                  {video.channelName}
+                </Link>
                 <span className="inline-flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
                   {publishedDate}
