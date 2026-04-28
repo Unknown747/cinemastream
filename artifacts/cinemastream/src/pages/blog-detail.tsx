@@ -11,6 +11,7 @@ import {
 import { Seo } from "@/components/seo";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { AdSlot } from "@/components/ad-slot";
+import { absoluteUrl } from "@/lib/site";
 import {
   renderMarkdown,
   readingTimeMinutes,
@@ -109,13 +110,13 @@ export default function BlogDetailPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Beranda", item: "/" },
-      { "@type": "ListItem", position: 2, name: "Artikel", item: "/blog" },
+      { "@type": "ListItem", position: 1, name: "Beranda", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Artikel", item: absoluteUrl("/blog") },
       {
         "@type": "ListItem",
         position: 3,
         name: article.title,
-        item: `/blog/${article.slug}`,
+        item: absoluteUrl(`/blog/${article.slug}`),
       },
     ],
   };

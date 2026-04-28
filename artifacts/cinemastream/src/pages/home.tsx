@@ -32,6 +32,7 @@ import {
   type WatchlistEntry,
 } from "@/lib/storage";
 import { isTrailer } from "@/lib/video-meta";
+import { absoluteUrl } from "@/lib/site";
 
 type TabKey = "semua" | "drama" | "movie" | "trailer";
 
@@ -164,7 +165,6 @@ export default function HomePage() {
 
   const itemListJsonLd = useMemo(() => {
     if (visible.length === 0) return null;
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
@@ -172,7 +172,7 @@ export default function HomePage() {
       itemListElement: visible.slice(0, 12).map((v, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${origin}/drama/${v.videoId}`,
+        url: absoluteUrl(`/drama/${v.videoId}`),
         name: v.title,
       })),
     };
@@ -182,7 +182,7 @@ export default function HomePage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Beranda", item: "/" },
+      { "@type": "ListItem", position: 1, name: "Beranda", item: absoluteUrl("/") },
     ],
   };
 

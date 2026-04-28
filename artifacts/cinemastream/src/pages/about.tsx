@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Languages, Tv2, RefreshCw, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Seo } from "@/components/seo";
+import { absoluteUrl } from "@/lib/site";
 
 const values = [
   {
@@ -84,8 +85,8 @@ export default function AboutPage() {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Beranda", item: "/" },
-              { "@type": "ListItem", position: 2, name: "Tentang", item: "/about" },
+              { "@type": "ListItem", position: 1, name: "Beranda", item: absoluteUrl("/") },
+              { "@type": "ListItem", position: 2, name: "Tentang", item: absoluteUrl("/about") },
             ],
           },
           faqJsonLd,

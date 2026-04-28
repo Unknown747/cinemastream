@@ -109,9 +109,12 @@ export function DramaCard({
         <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-secondary">
           <img
             src={video.thumbnailUrl}
-            alt={video.title}
+            alt={`Poster ${video.title}`}
             loading="lazy"
             decoding="async"
+            width={480}
+            height={640}
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 200px"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           />
 

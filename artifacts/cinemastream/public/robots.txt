@@ -1,10 +1,29 @@
 User-agent: *
 Allow: /
+Allow: /drama
+Allow: /blog
+Allow: /channel
+Allow: /about
+
 Disallow: /admin
 Disallow: /admin/*
+Disallow: /watchlist
+Disallow: /api/admin
+Disallow: /api/admin/*
 
-Sitemap: /sitemap.xml
-Sitemap: /api/sitemap-drama.xml
+# Larger search engines, friendlier crawl
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /watchlist
 
-# RSS feed (drama episodes + editorial articles)
-# /api/feed.xml
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /watchlist
+
+# Sitemaps
+Sitemap: https://cinemastream.app/sitemap.xml
+Sitemap: https://cinemastream.app/api/sitemap-drama.xml

@@ -23,6 +23,7 @@ import {
   subscribeWatchlist,
 } from "@/lib/storage";
 import { detectTags } from "@/lib/video-meta";
+import { absoluteUrl } from "@/lib/site";
 
 export default function DramaDetailPage() {
   const [, params] = useRoute<{ videoId: string }>("/drama/:videoId");
@@ -36,13 +37,26 @@ export default function DramaDetailPage() {
     [data, videoId],
   );
 
-  const related = useMemo(
-    () =>
-      (data ?? [])
-        .filter((v) => v.videoId !== videoId && v.channelId === video?.channelId)
-        .slice(0, 6),
-    [data, video, videoId],
-  );
+  const related = useMemo(() => {
+    const all = data ?? [];
+    if (!video) return [];
+    const seen = new Set<string>([videoId]);
+    const sameChannel = all.filter(
+      (v) => v.channelId === video.channelId && !seen.has(v.videoId),
+    );
+    sameChannel.forEach((v) => seen.add(v.videoId));
+    const otherSimilar = all.filter((v) => {
+      if (seen.has(v.videoId)) return false;
+      // Soft match by sharing a meaningful word (length>=4) in title
+      const w = video.title
+        .toLowerCase()
+        .split(/\W+/)
+        .filter((x) => x.length >= 4);
+      const t = v.title.toLowerCase();
+      return w.some((x) => t.includes(x));
+    });
+    return [...sameChannel, ...otherSimilar].slice(0, 8);
+  }, [data, video, videoId]);
 
   const [bookmarked, setBookmarked] = useState(false);
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
@@ -187,6 +201,7 @@ export default function DramaDetailPage() {
           {
             "@context": "https://schema.org",
             "@type": "VideoObject",
+            "@id": absoluteUrl(`/drama/${video.videoId}#video`),
             name: video.title,
             alternateName: video.originalTitle,
             description:
@@ -196,24 +211,57 @@ export default function DramaDetailPage() {
             uploadDate: video.publishedAt,
             embedUrl: `https://www.youtube.com/embed/${video.videoId}`,
             contentUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
-            inLanguage: "zh-CN",
+            url: absoluteUrl(`/drama/${video.videoId}`),
+            inLanguage: ["zh-CN", "id-ID"],
             isFamilyFriendly: true,
+            isAccessibleForFree: true,
+            genre: tags.isTrailer ? "Trailer" : "Drama",
+            keywords: [
+              "drama china",
+              "drama mandarin",
+              "drama china sub indo",
+              video.channelName,
+            ].join(", "),
             publisher: {
               "@type": "Organization",
               name: video.channelName,
+              url: absoluteUrl(`/channel/${video.channelId}`),
             },
+            potentialAction: {
+              "@type": "WatchAction",
+              target: absoluteUrl(`/drama/${video.videoId}`),
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "@id": absoluteUrl(`/drama/${video.videoId}`),
+            url: absoluteUrl(`/drama/${video.videoId}`),
+            name: `${video.title} — Nonton di CinemaStream`,
+            inLanguage: "id-ID",
+            isPartOf: {
+              "@type": "WebSite",
+              name: "CinemaStream",
+              url: absoluteUrl("/"),
+            },
+            primaryImageOfPage: {
+              "@type": "ImageObject",
+              url: video.thumbnailUrl,
+            },
+            datePublished: video.publishedAt,
+            dateModified: video.publishedAt,
           },
           {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Beranda", item: "/" },
-              { "@type": "ListItem", position: 2, name: "Drama", item: "/drama" },
+              { "@type": "ListItem", position: 1, name: "Beranda", item: absoluteUrl("/") },
+              { "@type": "ListItem", position: 2, name: "Drama", item: absoluteUrl("/drama") },
               {
                 "@type": "ListItem",
                 position: 3,
                 name: video.title,
-                item: `/drama/${video.videoId}`,
+                item: absoluteUrl(`/drama/${video.videoId}`),
               },
             ],
           },

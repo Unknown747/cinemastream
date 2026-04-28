@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { SITE_NAME as SITE_NAME_CONST, absoluteUrl } from "@/lib/site";
 
 type SeoProps = {
   title: string;
@@ -17,7 +18,7 @@ type SeoProps = {
   locale?: string;
 };
 
-const SITE_NAME = "CinemaStream";
+const SITE_NAME = SITE_NAME_CONST;
 const DEFAULT_IMAGE = "/opengraph.jpg";
 const DEFAULT_LOCALE = "id_ID";
 
@@ -39,11 +40,14 @@ export function Seo({
 }: SeoProps) {
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`;
   const resolvedPath = path ?? pathname;
-  const url =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${resolvedPath ?? window.location.pathname}`
-      : resolvedPath ?? "";
-  const resolvedImage = ogImage ?? image ?? DEFAULT_IMAGE;
+  const pathForUrl =
+    resolvedPath ??
+    (typeof window !== "undefined" ? window.location.pathname : "/");
+  const url = absoluteUrl(pathForUrl);
+  const rawImage = ogImage ?? image ?? DEFAULT_IMAGE;
+  const resolvedImage = rawImage.startsWith("http")
+    ? rawImage
+    : absoluteUrl(rawImage);
   const resolvedType = ogType ?? type ?? "website";
   const resolvedImageAlt = imageAlt ?? title;
 

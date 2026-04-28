@@ -12,6 +12,7 @@ import { Seo } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { DramaCard } from "@/components/drama-card";
 import { isTrailer } from "@/lib/video-meta";
+import { absoluteUrl } from "@/lib/site";
 
 type SortKey = "newest" | "oldest" | "title-asc";
 
@@ -88,7 +89,6 @@ export default function DramaPage() {
 
   const itemListJsonLd = useMemo(() => {
     if (filtered.length === 0) return null;
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
@@ -97,7 +97,7 @@ export default function DramaPage() {
       itemListElement: filtered.slice(0, 30).map((v, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${origin}/drama/${v.videoId}`,
+        url: absoluteUrl(`/drama/${v.videoId}`),
         name: v.title,
       })),
     };
@@ -107,8 +107,8 @@ export default function DramaPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Beranda", item: "/" },
-      { "@type": "ListItem", position: 2, name: "Drama", item: "/drama" },
+      { "@type": "ListItem", position: 1, name: "Beranda", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Drama", item: absoluteUrl("/drama") },
     ],
   };
 

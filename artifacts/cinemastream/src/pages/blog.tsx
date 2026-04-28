@@ -8,6 +8,7 @@ import {
 import { Seo } from "@/components/seo";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { AdSlot } from "@/components/ad-slot";
+import { absoluteUrl } from "@/lib/site";
 
 export default function BlogPage() {
   const { data, isLoading } = useListArticles(undefined, {
@@ -24,7 +25,7 @@ export default function BlogPage() {
     itemListElement: articles.slice(0, 30).map((a, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `/blog/${a.slug}`,
+      url: absoluteUrl(`/blog/${a.slug}`),
       name: a.title,
     })),
   };
@@ -33,8 +34,8 @@ export default function BlogPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Beranda", item: "/" },
-      { "@type": "ListItem", position: 2, name: "Artikel", item: "/blog" },
+      { "@type": "ListItem", position: 1, name: "Beranda", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Artikel", item: absoluteUrl("/blog") },
     ],
   };
 
