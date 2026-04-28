@@ -18,68 +18,68 @@ import {
 
 const router: IRouter = Router();
 
-const MAX_AUTO_TRANSLATIONS_PER_REQUEST = 8;
+const TRANSLATION_CONCURRENCY = 3;
+const inFlightTranslations = new Set<string>();
 
-async function autoTranslateAndPersist(
-  videos: RssVideo[],
-  existing: Map<string, VideoOverrideRow>,
-): Promise<Map<string, VideoOverrideRow>> {
-  if (!isTranslatorAvailable()) return existing;
+function scheduleAutoTranslations(videos: RssVideo[]): void {
+  if (!isTranslatorAvailable()) return;
 
-  const targets = videos.filter((v) => {
-    const o = existing.get(v.videoId);
-    if (o?.title?.trim()) return false;
-    return containsChinese(v.title);
-  });
-
-  if (targets.length === 0) return existing;
-
-  const slice = targets.slice(0, MAX_AUTO_TRANSLATIONS_PER_REQUEST);
-
-  const results = await Promise.all(
-    slice.map(async (v) => {
-      const translation = await translateChineseToIndonesian(v.title);
-      if (!translation) return null;
-      const existingDesc = existing.get(v.videoId)?.description ?? null;
-      try {
-        const inserted = await db
-          .insert(videoOverridesTable)
-          .values({
-            videoId: v.videoId,
-            title: translation,
-            description: existingDesc,
-          })
-          .onConflictDoUpdate({
-            target: videoOverridesTable.videoId,
-            set: { title: translation },
-          })
-          .returning();
-        return inserted[0] ?? null;
-      } catch (err) {
-        logger.warn(
-          { err, videoId: v.videoId },
-          "failed to persist auto translation",
-        );
-        return null;
-      }
-    }),
+  const todo = videos.filter(
+    (v) => containsChinese(v.title) && !inFlightTranslations.has(v.videoId),
   );
+  if (todo.length === 0) return;
 
-  const next = new Map(existing);
-  for (const row of results) {
-    if (row) next.set(row.videoId, row);
-  }
-  return next;
+  void (async () => {
+    try {
+      const overrides = await db.select().from(videoOverridesTable);
+      const have = new Set(
+        overrides.filter((o) => o.title?.trim()).map((o) => o.videoId),
+      );
+      const queue = todo.filter((v) => !have.has(v.videoId));
+      for (const v of queue) inFlightTranslations.add(v.videoId);
+
+      const workers = Array.from({ length: TRANSLATION_CONCURRENCY }, async () => {
+        while (queue.length > 0) {
+          const v = queue.shift();
+          if (!v) break;
+          try {
+            const translation = await translateChineseToIndonesian(v.title);
+            if (translation) {
+              await db
+                .insert(videoOverridesTable)
+                .values({ videoId: v.videoId, title: translation })
+                .onConflictDoUpdate({
+                  target: videoOverridesTable.videoId,
+                  set: { title: translation },
+                });
+            }
+          } catch (err) {
+            logger.warn(
+              { err, videoId: v.videoId },
+              "auto translation worker failed",
+            );
+          } finally {
+            inFlightTranslations.delete(v.videoId);
+          }
+        }
+      });
+      await Promise.all(workers);
+    } catch (err) {
+      logger.warn({ err }, "scheduleAutoTranslations failed");
+    }
+  })();
 }
 
 async function buildVideos(rss: RssVideo[]): Promise<unknown[]> {
   if (rss.length === 0) return [];
   const overrides = await db.select().from(videoOverridesTable);
-  let map = new Map<string, VideoOverrideRow>(
+  const map = new Map<string, VideoOverrideRow>(
     overrides.map((o) => [o.videoId, o]),
   );
 
-  map = await autoTranslateAndPersist(rss, map);
+  // Fire-and-forget: translations populate over time without blocking the
+  // current response. Subsequent requests will pick up new translations.
+  scheduleAutoTranslations(rss);
 
   return rss.map((v) => {
     const o = map.get(v.videoId);
