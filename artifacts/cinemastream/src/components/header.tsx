@@ -9,6 +9,7 @@ import {
 const links = [
   { href: "/", label: "Beranda" },
   { href: "/drama", label: "Drama" },
+  { href: "/search", label: "Cari" },
   { href: "/watchlist", label: "Daftar Saya" },
   { href: "/blog", label: "Artikel" },
   { href: "/admin", label: "Admin" },
@@ -35,8 +36,7 @@ export function Header() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     const q = query.trim();
-    if (!q) return;
-    navigate(`/drama?q=${encodeURIComponent(q)}`);
+    navigate(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
   };
 
   return (
@@ -64,7 +64,7 @@ export function Header() {
             onSubmit={onSubmit}
             className="flex-1 min-w-0"
             role="search"
-            aria-label="Cari drama"
+            aria-label="Cari film atau drama"
           >
             <label className="relative flex items-center">
               <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
@@ -73,10 +73,10 @@ export function Header() {
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search..."
+                placeholder="Cari film atau drama..."
                 className="w-full h-10 rounded-md bg-secondary/70 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground/80 outline-none ring-0 focus:bg-secondary focus:ring-1 focus:ring-primary/60 transition"
                 data-testid="input-header-search"
-                aria-label="Cari drama"
+                aria-label="Cari film atau drama"
               />
             </label>
           </form>

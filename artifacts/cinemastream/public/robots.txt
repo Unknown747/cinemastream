@@ -9,6 +9,8 @@ Allow: /about
 
 Disallow: /movie/
 Disallow: /drama/
+Disallow: /search
+Disallow: /search?*
 Disallow: /admin
 Disallow: /admin/*
 Disallow: /watchlist
