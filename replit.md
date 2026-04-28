@@ -103,6 +103,26 @@ To avoid Google penalties for thin/auto-generated content:
 - Sitemap (`/api/sitemap-drama.xml`) only lists URLs that resolve to real
   content (channels with videos).
 
+## Unified `/film/:slug` URLs + SEO upgrade
+
+- Movies and dramas share the canonical URL pattern `/film/<slug>` where the
+  trailing 11 characters are the YouTube video id (helpers in
+  `src/lib/slug.ts`). `/movie/*` and `/drama/*` issue 301 redirects via
+  `vite-plugin-legacy-redirects.ts` (dev + preview servers). `robots.txt`
+  disallows the legacy paths and allows `/film`.
+- `src/components/seo.tsx` enforces ≤60-char titles and ≤160-char descriptions
+  through `src/lib/seo-text.ts` (`truncateTitle`, `truncateDescription`,
+  `buildVideoSeoTitle`, `buildVideoSeoDescription`).
+- Drama and movie detail pages render a long-form synopsis (≥200 words) when
+  the source description is short, plus a collapsible "Transkrip & ringkasan
+  video" section (≥500 words) generated from metadata — non-spammy, factual,
+  per-video unique.
+- `src/components/share-bar.tsx` provides 44×44 tap-target social share
+  buttons (WhatsApp / Telegram / Facebook / X / Copy link) replacing the
+  single share button on detail pages.
+- The vite legacy-redirects plugin also injects `Cache-Control` headers for
+  static images, fonts, and `/assets/*` to improve mobile performance.
+
 ## Google AdSense (monetization)
 
 Ad infrastructure is configurable via Vite env vars (set in Deployments →

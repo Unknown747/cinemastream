@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { SITE_NAME as SITE_NAME_CONST, absoluteUrl } from "@/lib/site";
+import { truncateDescription, truncateTitle } from "@/lib/seo-text";
 
 type SeoProps = {
   title: string;
@@ -50,7 +51,9 @@ export function Seo({
   videoWidth,
   videoHeight,
 }: SeoProps) {
-  const fullTitle = title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`;
+  const safeDescription = truncateDescription(description);
+  const fullTitleRaw = title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`;
+  const fullTitle = truncateTitle(fullTitleRaw);
   const resolvedPath = path ?? pathname;
   const pathForUrl =
     resolvedPath ??
@@ -73,7 +76,7 @@ export function Seo({
     <Helmet>
       <html lang="id" />
       <title>{fullTitle}</title>
-      <meta name="description" content={description} />
+      <meta name="description" content={safeDescription} />
       {keywords && keywords.length > 0 && (
         <meta name="keywords" content={keywords.join(", ")} />
       )}
@@ -92,7 +95,7 @@ export function Seo({
       <meta property="og:type" content={resolvedType} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={safeDescription} />
       <meta property="og:image" content={resolvedImage} />
       <meta property="og:image:alt" content={resolvedImageAlt} />
       <meta property="og:url" content={url} />
@@ -117,7 +120,7 @@ export function Seo({
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:description" content={safeDescription} />
       <meta name="twitter:image" content={resolvedImage} />
       <meta name="twitter:image:alt" content={resolvedImageAlt} />
 

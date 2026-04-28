@@ -1,10 +1,14 @@
 User-agent: *
 Allow: /
+Allow: /film
+Allow: /film/*
 Allow: /drama
 Allow: /blog
 Allow: /channel
 Allow: /about
 
+Disallow: /movie/
+Disallow: /drama/
 Disallow: /admin
 Disallow: /admin/*
 Disallow: /watchlist

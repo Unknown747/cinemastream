@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Seo } from "@/components/seo";
 import { MovieCard } from "@/components/movie-card";
+import { ShareBar } from "@/components/share-bar";
 import {
   getMovieById,
   getRelated,
@@ -12,6 +13,13 @@ import {
   genreSlug,
 } from "@/data/movies";
 import { filmHrefForMovie } from "@/lib/slug";
+import {
+  buildLongDescription,
+  buildTranscript,
+  buildVideoSeoDescription,
+  buildVideoSeoTitle,
+  wordCount,
+} from "@/lib/seo-text";
 import NotFound from "@/pages/not-found";
 
 export default function MovieDetailPage() {
@@ -56,12 +64,25 @@ export default function MovieDetailPage() {
   return (
     <>
       <Seo
-        title={`${movie.title} (${movie.year})`}
-        description={movie.synopsis}
-        image={youtubeBackdrop(movie.youtubeId)}
-        type="video.movie"
-        pathname={filmHrefForMovie(movie.id)}
+        title={buildVideoSeoTitle({
+          title: `${movie.title} (${movie.year})`,
+          isMovie: true,
+        })}
+        description={buildVideoSeoDescription({
+          title: movie.title,
+          channelName: movie.director,
+          description: movie.synopsis,
+          publishedDate: `${movie.year}`,
+        })}
+        ogImage={youtubeBackdrop(movie.youtubeId)}
+        ogType="video.movie"
+        path={filmHrefForMovie(movie.id)}
         jsonLd={[movieJsonLd, videoJsonLd]}
+        videoUrl={`https://www.youtube.com/embed/${movie.youtubeId}`}
+        videoSecureUrl={`https://www.youtube.com/embed/${movie.youtubeId}`}
+        videoType="text/html"
+        videoWidth={1280}
+        videoHeight={720}
       />
 
       <article>
@@ -187,8 +208,59 @@ export default function MovieDetailPage() {
                   <Play className="h-5 w-5 fill-current" />
                   Play Now
                 </Button>
+
+                <ShareBar
+                  url={url || filmHrefForMovie(movie.id)}
+                  title={movie.title}
+                  text={`Nonton ${movie.title} (${movie.year}) di CinemaStream`}
+                />
               </motion.div>
             </div>
+          </div>
+        </section>
+
+        {/* Long-form SEO content */}
+        <section className="mt-16">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-12">
+            {wordCount(movie.synopsis) < 200 && (
+              <article className="rounded-xl border border-border/60 bg-card/40 p-5 text-sm leading-relaxed text-foreground/85">
+                <h2 className="mb-3 font-serif text-lg text-foreground">
+                  Sinopsis lengkap
+                </h2>
+                {buildLongDescription({
+                  title: movie.title,
+                  channelName: movie.director,
+                  description: movie.synopsis,
+                  publishedDate: `${movie.year}`,
+                  isMovie: true,
+                })
+                  .split("\n\n")
+                  .map((para, idx) => (
+                    <p key={idx} className="mb-3 last:mb-0">
+                      {para}
+                    </p>
+                  ))}
+              </article>
+            )}
+
+            <details className="mt-6 rounded-xl border border-border/60 bg-card/30 p-5 text-sm leading-relaxed text-foreground/80">
+              <summary className="cursor-pointer select-none font-serif text-base text-foreground">
+                Transkrip & ringkasan video
+              </summary>
+              <div className="mt-3 space-y-3">
+                {buildTranscript({
+                  title: movie.title,
+                  channelName: movie.director,
+                  description: movie.synopsis,
+                  publishedDate: `${movie.year}`,
+                  isMovie: true,
+                })
+                  .split("\n\n")
+                  .map((para, idx) => (
+                    <p key={idx}>{para}</p>
+                  ))}
+              </div>
+            </details>
           </div>
         </section>
 

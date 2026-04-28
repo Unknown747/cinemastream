@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useRoute, useLocation } from "wouter";
 import { extractVideoIdFromSlug, filmHrefForVideo } from "@/lib/slug";
+import {
+  buildLongDescription,
+  buildTranscript,
+  buildVideoSeoDescription,
+  buildVideoSeoTitle,
+  wordCount,
+} from "@/lib/seo-text";
+import { ShareBar } from "@/components/share-bar";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -8,8 +16,6 @@ import {
   Calendar,
   Bookmark,
   BookmarkCheck,
-  Share2,
-  Check,
 } from "lucide-react";
 import { useListAllVideos, getListAllVideosQueryKey } from "@workspace/api-client-react";
 import { Seo } from "@/components/seo";
@@ -73,7 +79,6 @@ export default function DramaDetailPage() {
   }, [data, video, videoId]);
 
   const [bookmarked, setBookmarked] = useState(false);
-  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
 
   useEffect(() => {
     if (!videoId) return;
@@ -91,37 +96,6 @@ export default function DramaDetailPage() {
       channelId: video.channelId,
       channelName: video.channelName,
     });
-  };
-
-  const handleShare = async () => {
-    if (!video) return;
-    const filmPath = filmHrefForVideo(video.title, video.videoId);
-    const shareUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}${filmPath}`
-        : filmPath;
-    const shareData = {
-      title: video.title,
-      text: `Nonton ${video.title} di CinemaStream`,
-      url: shareUrl,
-    };
-    try {
-      if (typeof navigator !== "undefined" && "share" in navigator) {
-        await navigator.share(shareData);
-        return;
-      }
-    } catch {
-      // user cancelled or share failed → fallback to copy
-    }
-    try {
-      if (typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
-        setShareState("copied");
-        window.setTimeout(() => setShareState("idle"), 1800);
-      }
-    } catch {
-      /* noop */
-    }
   };
 
   if (isLoading) {
@@ -195,11 +169,13 @@ export default function DramaDetailPage() {
   return (
     <>
       <Seo
-        title={`${video.title} — Nonton Drama China Sub Indo`}
-        description={
-          video.description?.slice(0, 200) ||
-          `Tonton ${video.title} di CinemaStream. Drama China dengan judul Bahasa Indonesia, update otomatis dari channel ${video.channelName}.`
-        }
+        title={buildVideoSeoTitle({ title: video.title })}
+        description={buildVideoSeoDescription({
+          title: video.title,
+          channelName: video.channelName,
+          description: video.description,
+          publishedDate: publishedDate,
+        })}
         path={filmHrefForVideo(video.title, video.videoId)}
         ogImage={video.thumbnailUrl}
         imageAlt={`Cuplikan ${video.title}`}
@@ -361,7 +337,7 @@ export default function DramaDetailPage() {
                 <button
                   type="button"
                   onClick={handleBookmark}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                  className={`inline-flex h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition ${
                     bookmarked
                       ? "border-primary bg-primary/15 text-primary"
                       : "border-border/70 bg-card/50 text-foreground/85 hover:border-primary/50 hover:text-foreground"
@@ -379,23 +355,17 @@ export default function DramaDetailPage() {
                     </>
                   )}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/50 px-3.5 py-1.5 text-sm font-medium text-foreground/85 hover:border-primary/50 hover:text-foreground transition"
-                  data-testid="button-detail-share"
-                >
-                  {shareState === "copied" ? (
-                    <>
-                      <Check className="h-4 w-4" /> Tautan disalin
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="h-4 w-4" /> Bagikan
-                    </>
-                  )}
-                </button>
               </div>
+
+              <ShareBar
+                url={
+                  typeof window !== "undefined"
+                    ? `${window.location.origin}${filmHrefForVideo(video.title, video.videoId)}`
+                    : filmHrefForVideo(video.title, video.videoId)
+                }
+                title={video.title}
+                text={`Nonton ${video.title} sub Indo di CinemaStream`}
+              />
 
               <YouTubeAttribution
                 videoId={video.videoId}
@@ -412,6 +382,60 @@ export default function DramaDetailPage() {
                 channelName={video.channelName}
                 hasOverride={video.hasOverride}
               />
+
+              {(() => {
+                const descWords = wordCount(video.description ?? "");
+                if (descWords >= 200) return null;
+                const partLabel =
+                  tags.partNumber != null
+                    ? `${tags.partType ?? "Part"} ${tags.partNumber}`
+                    : null;
+                const long = buildLongDescription({
+                  title: video.title,
+                  channelName: video.channelName,
+                  description: video.description,
+                  publishedDate,
+                  isTrailer: tags.isTrailer,
+                  partLabel,
+                  isMovie: false,
+                });
+                return (
+                  <section className="mt-6 rounded-xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-foreground/85">
+                    <h3 className="mb-2 font-serif text-base text-foreground">
+                      Sinopsis lengkap
+                    </h3>
+                    {long.split("\n\n").map((para, idx) => (
+                      <p key={idx} className="mb-3 last:mb-0">
+                        {para}
+                      </p>
+                    ))}
+                  </section>
+                );
+              })()}
+
+              <details className="mt-6 rounded-xl border border-border/60 bg-card/30 p-4 text-sm leading-relaxed text-foreground/80">
+                <summary className="cursor-pointer select-none font-serif text-base text-foreground">
+                  Transkrip & ringkasan video
+                </summary>
+                <div className="mt-3 space-y-3">
+                  {buildTranscript({
+                    title: video.title,
+                    channelName: video.channelName,
+                    description: video.description,
+                    publishedDate,
+                    isTrailer: tags.isTrailer,
+                    partLabel:
+                      tags.partNumber != null
+                        ? `${tags.partType ?? "Part"} ${tags.partNumber}`
+                        : null,
+                    isMovie: false,
+                  })
+                    .split("\n\n")
+                    .map((para, idx) => (
+                      <p key={idx}>{para}</p>
+                    ))}
+                </div>
+              </details>
             </div>
 
             <aside>
