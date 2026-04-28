@@ -13,59 +13,102 @@ import { logger } from "../lib/logger";
 import {
   containsChinese,
   translateChineseToIndonesian,
+  generateIndonesianSynopsis,
   isTranslatorAvailable,
 } from "../lib/translator";
 
 const router: IRouter = Router();
 
-const TRANSLATION_CONCURRENCY = 3;
-const inFlightTranslations = new Set<string>();
+const ENRICH_CONCURRENCY = 3;
+const inFlightEnrichments = new Set<string>();
 
-function scheduleAutoTranslations(videos: RssVideo[]): void {
+/**
+ * For each video, in the background:
+ *   1. Translate the Chinese title to Indonesian (if missing).
+ *   2. Generate a 2–3 sentence Indonesian synopsis from the (translated)
+ *      title and persist it as the description override (if missing).
+ * YouTube descriptions on these short-drama channels are usually just
+ * hashtags + creator tags + EDSA notices, not real plot summaries — so we
+ * synthesize a proper synopsis instead.
+ */
+function scheduleAutoEnrichment(videos: RssVideo[]): void {
   if (!isTranslatorAvailable()) return;
 
-  const todo = videos.filter(
-    (v) => containsChinese(v.title) && !inFlightTranslations.has(v.videoId),
-  );
+  const todo = videos.filter((v) => !inFlightEnrichments.has(v.videoId));
   if (todo.length === 0) return;
 
   void (async () => {
     try {
       const overrides = await db.select().from(videoOverridesTable);
-      const have = new Set(
-        overrides.filter((o) => o.title?.trim()).map((o) => o.videoId),
+      const map = new Map<string, VideoOverrideRow>(
+        overrides.map((o) => [o.videoId, o]),
       );
-      const queue = todo.filter((v) => !have.has(v.videoId));
-      for (const v of queue) inFlightTranslations.add(v.videoId);
 
-      const workers = Array.from({ length: TRANSLATION_CONCURRENCY }, async () => {
+      const queue = todo.filter((v) => {
+        const o = map.get(v.videoId);
+        const needsTitle = containsChinese(v.title) && !o?.title?.trim();
+        const needsDesc = !o?.description?.trim();
+        return needsTitle || needsDesc;
+      });
+
+      for (const v of queue) inFlightEnrichments.add(v.videoId);
+
+      const workers = Array.from({ length: ENRICH_CONCURRENCY }, async () => {
         while (queue.length > 0) {
           const v = queue.shift();
           if (!v) break;
           try {
-            const translation = await translateChineseToIndonesian(v.title);
-            if (translation) {
-              await db
-                .insert(videoOverridesTable)
-                .values({ videoId: v.videoId, title: translation })
-                .onConflictDoUpdate({
-                  target: videoOverridesTable.videoId,
-                  set: { title: translation },
-                });
+            const existing = map.get(v.videoId);
+
+            // 1) Title — translate if missing and original is Chinese.
+            let translatedTitle = existing?.title?.trim() || null;
+            if (!translatedTitle && containsChinese(v.title)) {
+              translatedTitle = await translateChineseToIndonesian(v.title);
+              if (translatedTitle) {
+                await db
+                  .insert(videoOverridesTable)
+                  .values({ videoId: v.videoId, title: translatedTitle })
+                  .onConflictDoUpdate({
+                    target: videoOverridesTable.videoId,
+                    set: { title: translatedTitle },
+                  });
+              }
+            }
+
+            // 2) Synopsis — generate if missing.
+            const hasDesc = existing?.description?.trim();
+            if (!hasDesc) {
+              const titleForSynopsis = translatedTitle || v.title;
+              const synopsis = await generateIndonesianSynopsis(
+                titleForSynopsis,
+                v.channelName,
+              );
+              if (synopsis) {
+                await db
+                  .insert(videoOverridesTable)
+                  .values({
+                    videoId: v.videoId,
+                    description: synopsis,
+                  })
+                  .onConflictDoUpdate({
+                    target: videoOverridesTable.videoId,
+                    set: { description: synopsis },
+                  });
+              }
             }
           } catch (err) {
             logger.warn(
               { err, videoId: v.videoId },
-              "auto translation worker failed",
+              "auto-enrichment worker failed",
             );
           } finally {
-            inFlightTranslations.delete(v.videoId);
+            inFlightEnrichments.delete(v.videoId);
           }
         }
       });
       await Promise.all(workers);
     } catch (err) {
-      logger.warn({ err }, "scheduleAutoTranslations failed");
+      logger.warn({ err }, "scheduleAutoEnrichment failed");
     }
   })();
 }
@@ -77,9 +120,9 @@ async function buildVideos(rss: RssVideo[]): Promise<unknown[]> {
     overrides.map((o) => [o.videoId, o]),
   );
 
-  // Fire-and-forget: translations populate over time without blocking the
-  // current response. Subsequent requests will pick up new translations.
-  scheduleAutoTranslations(rss);
+  // Fire-and-forget: translations + synopses populate over time without
+  // blocking the current response. Subsequent requests pick up new data.
+  scheduleAutoEnrichment(rss);
 
   return rss.map((v) => {
     const o = map.get(v.videoId);
