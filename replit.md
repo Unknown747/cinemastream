@@ -43,6 +43,27 @@ OpenAPI spec at `lib/api-spec/openapi.yaml`. After editing, run
 `@workspace/api-zod` (server validation) and `@workspace/api-client-react`
 (typed React Query hooks consumed by cinemastream).
 
+## Visual style
+
+Home page, header, footer, and drama card adopt an **AnimeSail-inspired**
+layout (per user request, April 2026):
+
+- Dark theme retuned to neutral cool gray (`hsl(220 10% 6%)`) with cyan accent
+  (`hsl(205 95% 55%)`) replacing the previous warm amber.
+- Header is a single sticky bar: small sail logo + dominant dark search input
+  + hamburger menu that toggles a vertical nav drawer.
+- Home is a single max-w 1100px column with: brick-red welcome banner,
+  centered "Episode Terbaru" title + Semua/Drama/Movie tab pill, 2-/3-/4-col
+  poster grid (3:4 aspect, title + year-cyan · type · time-ago), Next button
+  pagination, latest-article CTA, KOMUNITAS gradient banner, "Lagi Rame"
+  channel list (round avatars + user-online count), "Update Tontonan" pinned
+  bar with Sync button, "Movie Terbaru" with SEMUA MOVIE button, then
+  Berita & Artikel list.
+- Footer is a slim two-row block: legal nav + disclaimer.
+
+Drama detail / channel / blog pages still use the original component styles
+underneath the new theme tokens.
+
 ## Stack
 
 - React 19, Vite 7, Wouter, Tailwind v4, shadcn/ui, Framer Motion
