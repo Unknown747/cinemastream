@@ -159,20 +159,30 @@ To avoid Google penalties for thin/auto-generated content:
 
 ## Google AdSense (monetization)
 
-Ad infrastructure is configurable via Vite env vars (set in Deployments →
-Environment, **prefixed `VITE_`** so they're inlined at build time):
+Lihat **`ADS.md`** untuk panduan lengkap (apply AdSense, strategi RPM, network
+alternatif, hindari ban, dll).
 
-| Variable | Purpose |
+Ringkas: ad infrastructure dikonfigurasi via Vite env vars (prefix `VITE_`,
+**di-inline saat build** — harus rebuild kalau diganti):
+
+| Variable | Untuk |
 | --- | --- |
-| `VITE_ADSENSE_CLIENT` | Your AdSense client ID, e.g. `ca-pub-1234567890123456` |
-| `VITE_ADSENSE_SLOT_HOME_TOP` | Slot ID for the home page mid-section banner |
-| `VITE_ADSENSE_SLOT_IN_ARTICLE` | In-article slot below the player |
-| `VITE_ADSENSE_SLOT_SIDEBAR` | Sidebar slot on drama detail pages |
-| `VITE_ADSENSE_SLOT_CHANNEL_BOTTOM` | Bottom-of-grid slot on channel pages |
+| `VITE_ADSENSE_CLIENT` | Publisher ID AdSense (`ca-pub-...`) |
+| `VITE_ADSENSE_AUTO_ADS` | `true` = aktifkan Auto Ads (sangat disarankan) |
+| `VITE_ADSENSE_SLOT_HOME_TOP` | Banner di atas grid beranda |
+| `VITE_ADSENSE_SLOT_IN_ARTICLE` | In-article ad di drama detail & beranda mid |
+| `VITE_ADSENSE_SLOT_SIDEBAR` | Sidebar drama detail |
+| `VITE_ADSENSE_SLOT_CHANNEL_BOTTOM` | Bawah grid channel |
+| `VITE_ADSENSE_SLOT_BLOG_BOTTOM` | Bawah list artikel |
+| `VITE_ADSENSE_SLOT_STICKY_BOTTOM` | Sticky anchor bawah layar (RPM tertinggi) |
 
-If `VITE_ADSENSE_CLIENT` is unset, ads render nothing in production (and
-show a placeholder in dev). Update `public/ads.txt` with your real publisher
-ID before submitting the site to AdSense for review.
+`<AdSlot />` (`components/ad-slot.tsx`) hanya inject script AdSense **sekali**
+per halaman + auto push tiap unit. `<StickyBottomAd />` di-mount global di
+`App.tsx`, otomatis hidden di `/admin` dan `/dmca`, ada tombol close per sesi.
+
+Kalau `VITE_ADSENSE_CLIENT` kosong → tidak render apa-apa di production
+(placeholder di dev). Update `public/ads.txt` dengan publisher ID asli
+sebelum submit review AdSense.
 
 ## Editorial blog & RSS feed
 

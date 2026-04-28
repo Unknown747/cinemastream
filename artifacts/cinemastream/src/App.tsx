@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { StickyBottomAd } from "@/components/ad-slot";
 import HomePage from "@/pages/home";
 import BrowsePage from "@/pages/browse";
 import FilmDetailPage from "@/pages/film-detail";
@@ -73,6 +74,7 @@ function App() {
             </main>
             <Footer />
           </div>
+          <StickyBottomAd />
         </WouterRouter>
         <Toaster />
       </TooltipProvider>
