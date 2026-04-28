@@ -16,6 +16,7 @@ import ChannelPage from "@/pages/channel";
 import BlogPage from "@/pages/blog";
 import BlogDetailPage from "@/pages/blog-detail";
 import AdminPage from "@/pages/admin";
+import WatchlistPage from "@/pages/watchlist";
 import PrivacyPage from "@/pages/legal/privacy";
 import TermsPage from "@/pages/legal/terms";
 import DmcaPage from "@/pages/legal/dmca";
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/blog" component={BlogPage} />
       <Route path="/blog/:slug" component={BlogDetailPage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/watchlist" component={WatchlistPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/terms" component={TermsPage} />

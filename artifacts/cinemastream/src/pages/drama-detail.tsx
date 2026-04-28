@@ -1,7 +1,15 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useRoute } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Calendar } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Calendar,
+  Bookmark,
+  BookmarkCheck,
+  Share2,
+  Check,
+} from "lucide-react";
 import { useListAllVideos, getListAllVideosQueryKey } from "@workspace/api-client-react";
 import { Seo } from "@/components/seo";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -9,6 +17,12 @@ import { YouTubeAttribution } from "@/components/youtube-attribution";
 import { VideoDescription } from "@/components/video-description";
 import { StreamingPlayer } from "@/components/streaming-player";
 import { AdSlot } from "@/components/ad-slot";
+import {
+  isInWatchlist,
+  toggleWatchlist,
+  subscribeWatchlist,
+} from "@/lib/storage";
+import { detectTags } from "@/lib/video-meta";
 
 export default function DramaDetailPage() {
   const [, params] = useRoute<{ videoId: string }>("/drama/:videoId");
@@ -29,6 +43,57 @@ export default function DramaDetailPage() {
         .slice(0, 6),
     [data, video, videoId],
   );
+
+  const [bookmarked, setBookmarked] = useState(false);
+  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+
+  useEffect(() => {
+    if (!videoId) return;
+    const sync = () => setBookmarked(isInWatchlist(videoId));
+    sync();
+    return subscribeWatchlist(sync);
+  }, [videoId]);
+
+  const handleBookmark = () => {
+    if (!video) return;
+    toggleWatchlist({
+      videoId: video.videoId,
+      title: video.title,
+      thumbnailUrl: video.thumbnailUrl,
+      channelId: video.channelId,
+      channelName: video.channelName,
+    });
+  };
+
+  const handleShare = async () => {
+    if (!video) return;
+    const shareUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/drama/${video.videoId}`
+        : `/drama/${video.videoId}`;
+    const shareData = {
+      title: video.title,
+      text: `Nonton ${video.title} di CinemaStream`,
+      url: shareUrl,
+    };
+    try {
+      if (typeof navigator !== "undefined" && "share" in navigator) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch {
+      // user cancelled or share failed → fallback to copy
+    }
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareState("copied");
+        window.setTimeout(() => setShareState("idle"), 1800);
+      }
+    } catch {
+      /* noop */
+    }
+  };
 
   if (isLoading) {
     return (
@@ -54,6 +119,49 @@ export default function DramaDetailPage() {
     month: "long",
     day: "numeric",
   });
+
+  const tags = detectTags(video);
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: `Apakah ${video.title} bisa ditonton gratis?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Ya, ${video.title} bisa ditonton gratis di CinemaStream. Video resmi diembed langsung dari channel YouTube ${video.channelName}.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Apakah ${video.title} tersedia dengan subtitle Indonesia?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `CinemaStream secara otomatis mencoba mengaktifkan caption Bahasa Indonesia jika tersedia di video YouTube. Jika tidak ada, kamu bisa memilih caption manual lewat tombol CC di pemutar.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Apakah saya bisa melanjutkan film yang belum selesai?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Bisa. CinemaStream menyimpan posisi terakhir kamu menonton di perangkat (browser) ini, jadi kamu bisa melanjutkan dari menit terakhir saat membuka film yang sama.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Apakah ini film penuh atau hanya trailer?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: tags.isTrailer
+            ? "Video ini adalah trailer atau cuplikan dari versi penuh. Kunjungi channel asli untuk versi lengkap film."
+            : "Video ini adalah versi penuh film yang diunggah oleh channel resmi di YouTube.",
+        },
+      },
+    ],
+  };
 
   return (
     <>
@@ -109,6 +217,7 @@ export default function DramaDetailPage() {
               },
             ],
           },
+          faqJsonLd,
         ]}
       />
 
@@ -141,6 +250,7 @@ export default function DramaDetailPage() {
               <StreamingPlayer
                 videoId={video.videoId}
                 title={video.title}
+                channelId={video.channelId}
                 channelName={video.channelName}
                 thumbnailUrl={video.thumbnailUrl}
                 publishedDate={publishedDate}
@@ -166,6 +276,56 @@ export default function DramaDetailPage() {
                     Judul Bahasa Indonesia
                   </span>
                 )}
+                {tags.isTrailer && (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-400">
+                    Trailer / Cuplikan
+                  </span>
+                )}
+                {tags.partNumber && (
+                  <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-sky-400">
+                    {tags.partType ?? "Part"} {tags.partNumber}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={handleBookmark}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                    bookmarked
+                      ? "border-primary bg-primary/15 text-primary"
+                      : "border-border/70 bg-card/50 text-foreground/85 hover:border-primary/50 hover:text-foreground"
+                  }`}
+                  aria-pressed={bookmarked}
+                  data-testid="button-detail-watchlist"
+                >
+                  {bookmarked ? (
+                    <>
+                      <BookmarkCheck className="h-4 w-4" /> Tersimpan di Daftar
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="h-4 w-4" /> Tambah ke Daftar Tonton
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/50 px-3.5 py-1.5 text-sm font-medium text-foreground/85 hover:border-primary/50 hover:text-foreground transition"
+                  data-testid="button-detail-share"
+                >
+                  {shareState === "copied" ? (
+                    <>
+                      <Check className="h-4 w-4" /> Tautan disalin
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="h-4 w-4" /> Bagikan
+                    </>
+                  )}
+                </button>
               </div>
 
               <YouTubeAttribution

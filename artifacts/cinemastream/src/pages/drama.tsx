@@ -11,6 +11,9 @@ import {
 import { Seo } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { DramaCard } from "@/components/drama-card";
+import { isTrailer } from "@/lib/video-meta";
+
+type SortKey = "newest" | "oldest" | "title-asc";
 
 export default function DramaPage() {
   const channels = useListChannels({
@@ -33,6 +36,8 @@ export default function DramaPage() {
   }, [search]);
   const [query, setQuery] = useState(initialQuery);
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
+  const [hideTrailers, setHideTrailers] = useState(true);
+  const [sort, setSort] = useState<SortKey>("newest");
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -40,6 +45,7 @@ export default function DramaPage() {
 
   const filtered = useMemo(() => {
     let list = videos.data ?? [];
+    if (hideTrailers) list = list.filter((v) => !isTrailer(v));
     if (activeChannel) list = list.filter((v) => v.channelId === activeChannel);
     if (query.trim()) {
       const q = query.toLowerCase();
@@ -50,8 +56,27 @@ export default function DramaPage() {
           v.channelName.toLowerCase().includes(q),
       );
     }
-    return list;
-  }, [videos.data, query, activeChannel]);
+    const sorted = [...list];
+    if (sort === "newest") {
+      sorted.sort(
+        (a, b) =>
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+      );
+    } else if (sort === "oldest") {
+      sorted.sort(
+        (a, b) =>
+          new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
+      );
+    } else if (sort === "title-asc") {
+      sorted.sort((a, b) => a.title.localeCompare(b.title, "id"));
+    }
+    return sorted;
+  }, [videos.data, query, activeChannel, hideTrailers, sort]);
+
+  const trailerCount = useMemo(
+    () => (videos.data ?? []).filter((v) => isTrailer(v)).length,
+    [videos.data],
+  );
 
   const channelStats = useMemo(() => {
     const counts = new Map<string, number>();
@@ -172,6 +197,46 @@ export default function DramaPage() {
                       data-testid="input-search-drama"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/50 mb-3">
+                    Urutkan
+                  </p>
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as SortKey)}
+                    className="h-10 w-full rounded-md border border-border/60 bg-card/60 px-3 text-sm focus:border-primary focus:outline-none"
+                    data-testid="select-sort-drama"
+                  >
+                    <option value="newest">Terbaru dulu</option>
+                    <option value="oldest">Terlama dulu</option>
+                    <option value="title-asc">Judul A → Z</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    className="flex items-start gap-2 cursor-pointer select-none rounded-md border border-border/60 bg-card/60 px-3 py-2 hover:border-primary/40 transition"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={hideTrailers}
+                      onChange={(e) => setHideTrailers(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-border/60 accent-primary"
+                      data-testid="checkbox-hide-trailers"
+                    />
+                    <span className="text-xs leading-snug">
+                      <span className="block font-medium text-foreground">
+                        Sembunyikan trailer
+                      </span>
+                      <span className="block text-foreground/50">
+                        {trailerCount > 0
+                          ? `${trailerCount} trailer/cuplikan tersembunyi`
+                          : "Trailer & cuplikan disembunyikan"}
+                      </span>
+                    </span>
+                  </label>
                 </div>
 
                 {(channels.data?.length ?? 0) > 0 && (

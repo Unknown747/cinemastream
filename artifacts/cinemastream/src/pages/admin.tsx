@@ -91,6 +91,123 @@ function ChannelForm() {
   );
 }
 
+function BulkChannelImport() {
+  const qc = useQueryClient();
+  const [text, setText] = useState("");
+  const [progress, setProgress] = useState<{
+    total: number;
+    done: number;
+    ok: number;
+    failed: { handle: string; error: string }[];
+  } | null>(null);
+  const [running, setRunning] = useState(false);
+  const add = useAddChannel();
+
+  const handles = text
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const run = async () => {
+    if (handles.length === 0) return;
+    setRunning(true);
+    setProgress({ total: handles.length, done: 0, ok: 0, failed: [] });
+    for (let i = 0; i < handles.length; i++) {
+      const handle = handles[i];
+      try {
+        await add.mutateAsync({ data: { handle } });
+        setProgress((p) =>
+          p
+            ? { ...p, done: p.done + 1, ok: p.ok + 1 }
+            : null,
+        );
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Gagal menambah channel";
+        setProgress((p) =>
+          p
+            ? {
+                ...p,
+                done: p.done + 1,
+                failed: [...p.failed, { handle, error: message }],
+              }
+            : null,
+        );
+      }
+    }
+    qc.invalidateQueries({ queryKey: getListChannelsQueryKey() });
+    qc.invalidateQueries({ queryKey: getListAllVideosQueryKey() });
+    setRunning(false);
+  };
+
+  return (
+    <details className="mt-4 rounded-md border border-border/60 bg-card/40">
+      <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-medium hover:bg-card/70 transition">
+        Bulk import channel ({handles.length} terdeteksi)
+      </summary>
+      <div className="border-t border-border/50 p-4">
+        <p className="mb-2 text-xs text-foreground/70">
+          Tempel banyak handle YouTube sekaligus, satu per baris (atau
+          dipisah koma). Contoh: <code>@channel1</code>, URL channel, atau
+          ID channel.
+        </p>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={6}
+          placeholder={"@channel_pertama\n@channel_kedua\nhttps://youtube.com/@channel_ketiga"}
+          className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm font-mono focus:border-primary focus:outline-none"
+          disabled={running}
+          data-testid="textarea-bulk-channels"
+        />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            onClick={run}
+            disabled={running || handles.length === 0}
+            data-testid="button-bulk-import"
+          >
+            {running ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            <span className="ml-2">
+              {running
+                ? `Mengimpor ${progress?.done ?? 0}/${progress?.total ?? 0}…`
+                : `Impor ${handles.length} channel`}
+            </span>
+          </Button>
+          {progress && !running && (
+            <p className="text-xs text-foreground/70">
+              <span className="font-semibold text-green-500">
+                {progress.ok} berhasil
+              </span>
+              {progress.failed.length > 0 && (
+                <>
+                  {" "}·{" "}
+                  <span className="font-semibold text-destructive">
+                    {progress.failed.length} gagal
+                  </span>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+        {progress && progress.failed.length > 0 && (
+          <ul className="mt-3 max-h-40 overflow-auto rounded border border-destructive/30 bg-destructive/5 p-2 text-xs">
+            {progress.failed.map((f) => (
+              <li key={f.handle} className="text-destructive">
+                <code className="font-mono">{f.handle}</code> — {f.error}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </details>
+  );
+}
+
 function ChannelList() {
   const qc = useQueryClient();
   const channels = useListChannels({
@@ -598,6 +715,7 @@ export default function AdminPage() {
               channel meng-upload tontonan baru.
             </p>
             <ChannelForm />
+            <BulkChannelImport />
             <div className="mt-4">
               <ChannelList />
             </div>

@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
-import { Search, Menu, X, Sailboat } from "lucide-react";
+import { Search, Menu, X, Sailboat, Bookmark } from "lucide-react";
+import {
+  getWatchlist,
+  subscribeWatchlist,
+} from "@/lib/storage";
 
 const links = [
   { href: "/", label: "Beranda" },
   { href: "/drama", label: "Drama" },
+  { href: "/watchlist", label: "Daftar Saya" },
   { href: "/blog", label: "Artikel" },
   { href: "/admin", label: "Admin" },
   { href: "/about", label: "Tentang" },
@@ -13,12 +18,19 @@ const links = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [savedCount, setSavedCount] = useState(0);
   const [location, navigate] = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setOpen(false);
   }, [location]);
+
+  useEffect(() => {
+    const sync = () => setSavedCount(getWatchlist().length);
+    sync();
+    return subscribeWatchlist(sync);
+  }, []);
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -68,6 +80,20 @@ export function Header() {
               />
             </label>
           </form>
+
+          <Link
+            href="/watchlist"
+            className="relative flex h-10 w-10 items-center justify-center rounded-md text-foreground hover:bg-secondary/70 transition"
+            aria-label={`Daftar Saya (${savedCount})`}
+            data-testid="link-header-watchlist"
+          >
+            <Bookmark className="h-5 w-5" />
+            {savedCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                {savedCount > 99 ? "99+" : savedCount}
+              </span>
+            )}
+          </Link>
 
           <button
             type="button"

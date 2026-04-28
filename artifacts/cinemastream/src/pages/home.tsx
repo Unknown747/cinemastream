@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   ChevronRight,
@@ -6,6 +6,9 @@ import {
   RefreshCw,
   Newspaper,
   Tv2,
+  Bookmark,
+  History as HistoryIcon,
+  Trash2,
 } from "lucide-react";
 import {
   useListAllVideos,
@@ -18,13 +21,25 @@ import {
 import { Seo } from "@/components/seo";
 import { DramaCard } from "@/components/drama-card";
 import { AdSlot } from "@/components/ad-slot";
+import {
+  getHistory,
+  getWatchlist,
+  removeHistory,
+  subscribeHistory,
+  subscribeWatchlist,
+  formatTime,
+  type HistoryEntry,
+  type WatchlistEntry,
+} from "@/lib/storage";
+import { isTrailer } from "@/lib/video-meta";
 
-type TabKey = "semua" | "drama" | "movie";
+type TabKey = "semua" | "drama" | "movie" | "trailer";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "semua", label: "Semua" },
   { key: "drama", label: "Drama" },
   { key: "movie", label: "Movie" },
+  { key: "trailer", label: "Trailer" },
 ];
 
 export default function HomePage() {
@@ -45,17 +60,64 @@ export default function HomePage() {
   const list = videos.data ?? [];
   const [tab, setTab] = useState<TabKey>("semua");
   const [page, setPage] = useState(1);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
   const PAGE_SIZE = 8;
 
+  useEffect(() => {
+    const sync = () => {
+      setHistory(getHistory());
+      setWatchlist(getWatchlist());
+    };
+    sync();
+    const off1 = subscribeHistory(sync);
+    const off2 = subscribeWatchlist(sync);
+    return () => {
+      off1();
+      off2();
+    };
+  }, []);
+
   const filtered = useMemo(() => {
+    if (tab === "trailer") {
+      return list.filter((v) => isTrailer(v));
+    }
+    const noTrailer = list.filter((v) => !isTrailer(v));
     if (tab === "movie") {
-      return list.filter((v) => /movie|film|the movie/i.test(v.title));
+      return noTrailer.filter((v) => /movie|film|the movie/i.test(v.title));
     }
     if (tab === "drama") {
-      return list.filter((v) => !/movie|film|the movie/i.test(v.title));
+      return noTrailer.filter((v) => !/movie|film|the movie/i.test(v.title));
     }
-    return list;
+    return noTrailer;
   }, [list, tab]);
+
+  const continueWatching = useMemo(() => {
+    const ids = new Set(list.map((v) => v.videoId));
+    return history
+      .filter(
+        (h) =>
+          ids.has(h.videoId) &&
+          h.durationSec > 0 &&
+          h.positionSec > 5 &&
+          h.durationSec - h.positionSec > 30,
+      )
+      .slice(0, 8);
+  }, [history, list]);
+
+  type VideoItem = (typeof list)[number];
+  const watchlistVisible = useMemo<VideoItem[]>(() => {
+    const byId = new Map<string, VideoItem>(
+      list.map((v) => [v.videoId, v]),
+    );
+    const result: VideoItem[] = [];
+    for (const w of watchlist) {
+      const found = byId.get(w.videoId);
+      if (found) result.push(found);
+      if (result.length >= 8) break;
+    }
+    return result;
+  }, [watchlist, list]);
 
   const visible = useMemo(
     () => filtered.slice(0, page * PAGE_SIZE),
@@ -164,6 +226,129 @@ export default function HomePage() {
             .
           </p>
         </section>
+
+        {/* Lanjut Nonton — continue watching rail */}
+        {continueWatching.length > 0 && (
+          <section
+            className="mt-6"
+            aria-labelledby="lanjut-nonton-heading"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2
+                id="lanjut-nonton-heading"
+                className="inline-flex items-center gap-1.5 text-base font-semibold"
+              >
+                <HistoryIcon className="h-4 w-4 text-primary" />
+                Lanjut Nonton
+              </h2>
+              <Link
+                href="/watchlist"
+                className="text-sm text-primary font-medium inline-flex items-center gap-0.5 hover:underline"
+                data-testid="link-history-all"
+              >
+                Riwayat <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {continueWatching.map((h) => {
+                const pct =
+                  h.durationSec > 0
+                    ? Math.min(
+                        100,
+                        Math.round((h.positionSec / h.durationSec) * 100),
+                      )
+                    : 0;
+                return (
+                  <li
+                    key={h.videoId}
+                    className="group relative rounded-md border border-border/60 bg-card/40 overflow-hidden hover:border-primary/40 transition"
+                    data-testid={`card-continue-${h.videoId}`}
+                  >
+                    <Link
+                      href={`/drama/${h.videoId}`}
+                      className="block"
+                    >
+                      <div className="relative aspect-video bg-black">
+                        <img
+                          src={h.thumbnailUrl}
+                          alt={h.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <span className="absolute inset-x-0 bottom-0 h-1 bg-black/50">
+                          <span
+                            className="block h-full bg-primary"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </span>
+                        <span className="absolute right-1.5 top-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                          {formatTime(h.positionSec)}
+                        </span>
+                        <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 transition">
+                          <Play className="h-8 w-8 text-white fill-current" />
+                        </span>
+                      </div>
+                      <div className="px-2 py-1.5">
+                        <p className="text-xs font-semibold leading-snug line-clamp-2">
+                          {h.title}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-1">
+                          {h.channelName} · {pct}%
+                        </p>
+                      </div>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        removeHistory(h.videoId);
+                      }}
+                      className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white/85 opacity-0 group-hover:opacity-100 hover:bg-black/85 transition"
+                      aria-label="Hapus dari riwayat"
+                      data-testid={`button-remove-continue-${h.videoId}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        {/* Daftar Tonton — bookmarked rail */}
+        {watchlistVisible.length > 0 && (
+          <section className="mt-8" aria-labelledby="daftar-tonton-heading">
+            <div className="flex items-center justify-between mb-3">
+              <h2
+                id="daftar-tonton-heading"
+                className="inline-flex items-center gap-1.5 text-base font-semibold"
+              >
+                <Bookmark className="h-4 w-4 text-primary" />
+                Daftar Tonton Saya
+              </h2>
+              <Link
+                href="/watchlist"
+                className="text-sm text-primary font-medium inline-flex items-center gap-0.5 hover:underline"
+                data-testid="link-watchlist-all"
+              >
+                Lihat semua <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {watchlistVisible.map((v, i) => (
+                <DramaCard
+                  key={v.videoId}
+                  video={v}
+                  index={i}
+                  type={
+                    /movie|film|the movie/i.test(v.title) ? "Movie" : "Drama"
+                  }
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Tontonan Terbaru with tabs */}
         <section

@@ -1,9 +1,21 @@
+import { useEffect, useState, type MouseEvent } from "react";
 import { Link } from "wouter";
+import { Bookmark, BookmarkCheck, Play } from "lucide-react";
+import {
+  isInWatchlist,
+  toggleWatchlist,
+  subscribeWatchlist,
+  getResumePosition,
+  subscribeHistory,
+  getHistory,
+} from "@/lib/storage";
+import { detectTags } from "@/lib/video-meta";
 
 type DramaCardVideo = {
   videoId: string;
   title: string;
   originalTitle?: string;
+  channelId: string;
   channelName: string;
   thumbnailUrl: string;
   publishedAt: string;
@@ -46,6 +58,40 @@ export function DramaCard({
   showChannel: _showChannel = true,
   type = "Film",
 }: DramaCardProps) {
+  const [saved, setSaved] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const sync = () => {
+      setSaved(isInWatchlist(video.videoId));
+      const pos = getResumePosition(video.videoId);
+      const hist = getHistory().find((h) => h.videoId === video.videoId);
+      const dur = hist?.durationSec ?? 0;
+      setProgress(dur > 0 && pos > 0 ? Math.min(1, pos / dur) : 0);
+    };
+    sync();
+    const off1 = subscribeWatchlist(sync);
+    const off2 = subscribeHistory(sync);
+    return () => {
+      off1();
+      off2();
+    };
+  }, [video.videoId]);
+
+  const tags = detectTags(video);
+
+  const onToggleSave = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWatchlist({
+      videoId: video.videoId,
+      title: video.title,
+      thumbnailUrl: video.thumbnailUrl,
+      channelId: video.channelId,
+      channelName: video.channelName,
+    });
+  };
+
   const year = new Date(video.publishedAt).getFullYear();
   const titleClass =
     size === "lg"
@@ -54,7 +100,7 @@ export function DramaCard({
         ? "text-xs leading-snug"
         : "text-sm leading-snug";
   return (
-    <article className="group">
+    <article className="group relative">
       <Link
         href={`/drama/${video.videoId}`}
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
@@ -65,13 +111,64 @@ export function DramaCard({
             src={video.thumbnailUrl}
             alt={video.title}
             loading="lazy"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           />
-          {video.hasOverride && (
-            <span className="absolute left-2 top-2 rounded bg-primary/95 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow">
-              Sub Indo
-            </span>
+
+          {/* Top-left badges */}
+          <div className="absolute left-2 top-2 flex flex-col gap-1">
+            {video.hasOverride && (
+              <span className="rounded bg-primary/95 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow">
+                Sub Indo
+              </span>
+            )}
+            {tags.isTrailer && (
+              <span className="rounded bg-amber-500/95 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-black shadow">
+                Trailer
+              </span>
+            )}
+            {tags.partNumber !== null && !tags.isTrailer && (
+              <span className="rounded bg-blue-500/95 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow">
+                Part {tags.partNumber}
+              </span>
+            )}
+          </div>
+
+          {/* Resume progress bar */}
+          {progress > 0.02 && (
+            <>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${Math.round(progress * 100)}%` }}
+                />
+              </div>
+              <span className="absolute right-2 bottom-2 inline-flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                <Play className="h-2.5 w-2.5 fill-current" />
+                Lanjut
+              </span>
+            </>
           )}
+
+          {/* Bookmark button */}
+          <button
+            type="button"
+            onClick={onToggleSave}
+            aria-label={saved ? "Hapus dari Daftar Tonton" : "Simpan ke Daftar Tonton"}
+            aria-pressed={saved}
+            className={`absolute right-1.5 top-1.5 inline-flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition ${
+              saved
+                ? "bg-primary text-primary-foreground"
+                : "bg-black/55 text-white opacity-0 group-hover:opacity-100 focus:opacity-100"
+            }`}
+            data-testid={`button-bookmark-${video.videoId}`}
+          >
+            {saved ? (
+              <BookmarkCheck className="h-4 w-4" />
+            ) : (
+              <Bookmark className="h-4 w-4" />
+            )}
+          </button>
         </div>
         <div className="pt-2">
           <h3
