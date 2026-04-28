@@ -2,10 +2,11 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, videoOverridesTable } from "@workspace/db";
 import { UpsertVideoOverrideBody, UpsertVideoOverrideResponse } from "@workspace/api-zod";
+import { requireAdmin } from "../lib/admin-auth";
 
 const router: IRouter = Router();
 
-router.put("/overrides/:videoId", async (req, res) => {
+router.put("/overrides/:videoId", requireAdmin, async (req, res) => {
   const { videoId } = req.params;
   const parsed = UpsertVideoOverrideBody.safeParse(req.body);
   if (!parsed.success) {
@@ -32,7 +33,7 @@ router.put("/overrides/:videoId", async (req, res) => {
   );
 });
 
-router.delete("/overrides/:videoId", async (req, res) => {
+router.delete("/overrides/:videoId", requireAdmin, async (req, res) => {
   const { videoId } = req.params;
   await db.delete(videoOverridesTable).where(eq(videoOverridesTable.videoId, videoId));
   res.status(204).end();

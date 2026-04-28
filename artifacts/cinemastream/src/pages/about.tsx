@@ -8,7 +8,7 @@ const values = [
   {
     icon: Languages,
     title: "Judul yang langsung kamu paham",
-    text: "Judul Mandarin diterjemahkan otomatis ke Bahasa Indonesia menggunakan AI penerjemah profesional, lalu disimpan agar episode berikutnya muncul instan.",
+    text: "Judul Mandarin diterjemahkan otomatis ke Bahasa Indonesia menggunakan AI penerjemah profesional, lalu disimpan agar tontonan berikutnya muncul instan.",
   },
   {
     icon: RefreshCw,
@@ -52,7 +52,7 @@ const faqJsonLd = {
       name: "Bagaimana cara menambah drama baru?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Buka halaman Admin, tempel handle channel YouTube (@nama_channel) atau URL channel-nya, lalu klik Tambah Channel. Episode-episodenya akan otomatis muncul di halaman Drama.",
+        text: "Buka halaman Admin, tempel handle channel YouTube (@nama_channel) atau URL channel-nya, lalu klik Tambah Channel. Film-filmnya akan otomatis muncul di halaman Drama.",
       },
     },
     {

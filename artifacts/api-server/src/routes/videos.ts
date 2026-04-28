@@ -16,8 +16,12 @@ import {
   generateIndonesianSynopsis,
   isTranslatorAvailable,
 } from "../lib/translator";
+import { videosLimiter } from "../lib/rate-limit";
 
 const router: IRouter = Router();
+
+router.use("/videos", videosLimiter);
+router.use("/channels/:id/videos", videosLimiter);
 
 const ENRICH_CONCURRENCY = 3;
 const inFlightEnrichments = new Set<string>();

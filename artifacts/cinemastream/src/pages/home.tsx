@@ -70,7 +70,7 @@ export default function HomePage() {
   const fallbackMovies = useMemo(() => list.slice(0, 4), [list]);
   const movieRow = movies.length >= 1 ? movies : fallbackMovies;
 
-  // "Lagi Rame" — popular channels (mock user counts derived from episode count)
+  // "Lagi Rame" — popular channels (sorted by film count)
   const popularChannels = useMemo(() => {
     const map = new Map<
       string,
@@ -127,8 +127,8 @@ export default function HomePage() {
   return (
     <>
       <Seo
-        title="CinemaStream — Nonton Drama China Sub Indo, Update Otomatis"
-        description="Nonton drama China, mini drama, dan short drama Mandarin terbaru dengan judul Bahasa Indonesia. Update otomatis tiap channel YouTube upload episode baru."
+        title="CinemaStream — Nonton Film Drama China Sub Indo, Update Otomatis"
+        description="Nonton film drama China, mini drama, dan short drama Mandarin lengkap dengan judul Bahasa Indonesia. Update otomatis tiap channel YouTube upload tontonan baru."
         path="/"
         keywords={[
           "drama china",
@@ -149,11 +149,11 @@ export default function HomePage() {
           aria-label="Pesan sambutan"
         >
           <p className="text-foreground/95">
-            Selamat datang di <strong>CinemaStream</strong> tempat nonton drama
-            China dan mini series Mandarin sub Indonesia update terbaru. Judul
-            otomatis diterjemahkan ke Bahasa Indonesia oleh AI penerjemah, dan
-            episode baru muncul sendiri tiap kreator upload. Yuk pantau juga
-            artikel kami di{" "}
+            Selamat datang di <strong>CinemaStream</strong> tempat nonton film
+            drama China dan mini series Mandarin sub Indonesia paling update.
+            Judul otomatis diterjemahkan ke Bahasa Indonesia oleh AI
+            penerjemah, dan tontonan baru muncul sendiri tiap kreator upload.
+            Yuk pantau juga artikel kami di{" "}
             <Link
               href="/blog"
               className="font-semibold underline underline-offset-2"
@@ -165,7 +165,7 @@ export default function HomePage() {
           </p>
         </section>
 
-        {/* Episode Terbaru with tabs */}
+        {/* Tontonan Terbaru with tabs */}
         <section
           className="mt-6 sm:mt-8"
           aria-labelledby="terbaru-heading"
@@ -174,13 +174,13 @@ export default function HomePage() {
             id="terbaru-heading"
             className="text-center text-lg sm:text-xl font-semibold tracking-tight"
           >
-            Episode Terbaru
+            Tontonan Terbaru
           </h2>
           <div className="mt-3 flex items-center justify-center">
             <div
               className="inline-flex rounded-md border border-border/70 bg-secondary/40 p-0.5"
               role="tablist"
-              aria-label="Filter episode"
+              aria-label="Filter tontonan"
             >
               {TABS.map((t) => {
                 const active = tab === t.key;
@@ -229,7 +229,7 @@ export default function HomePage() {
                     type={
                       /movie|film|the movie/i.test(v.title)
                         ? "Movie"
-                        : "ONA"
+                        : "Drama"
                     }
                   />
                 ))}
@@ -249,7 +249,7 @@ export default function HomePage() {
             </>
           ) : (
             <p className="mt-8 text-center text-sm text-muted-foreground">
-              Belum ada episode pada kategori ini.
+              Belum ada tontonan pada kategori ini.
             </p>
           )}
         </section>
@@ -325,7 +325,7 @@ export default function HomePage() {
                         {c.channelName}
                       </span>
                       <span className="block text-xs text-muted-foreground line-clamp-1">
-                        Drama Mandarin · {c.count} episode tersedia
+                        Drama Mandarin · {c.count} film tersedia
                       </span>
                       <span className="block text-xs text-muted-foreground/80">
                         {Math.max(20, c.count * 17)} User Online
@@ -454,8 +454,8 @@ export default function HomePage() {
             <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
               Tambahkan channel YouTube drama China di halaman Admin
               {channelCount > 0 ? "" : " — belum ada channel terdaftar"}, lalu
-              episode-episodenya akan tampil otomatis di sini dengan judul
-              Bahasa Indonesia.
+              film-filmnya akan tampil otomatis di sini dengan judul Bahasa
+              Indonesia.
             </p>
             <Link
               href="/admin"

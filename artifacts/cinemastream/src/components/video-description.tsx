@@ -54,7 +54,7 @@ export function VideoDescription({
   if (paragraphs.length === 0) {
     return (
       <div className="mt-3 rounded-lg border border-dashed border-border/60 bg-card/30 p-4 text-sm text-foreground/60 leading-relaxed">
-        Belum ada sinopsis untuk episode ini.
+        Belum ada sinopsis untuk film ini.
         {channelName ? (
           <>
             {" "}

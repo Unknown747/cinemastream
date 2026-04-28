@@ -116,7 +116,7 @@ export default function ChannelPage() {
     <>
       <Seo
         title={`${channel.name} — Drama China Sub Indo | CinemaStream`}
-        description={`Daftar lengkap drama dan mini series dari channel ${channel.name}, dengan judul Bahasa Indonesia. ${channelVideos.length} episode tersedia, update otomatis tiap upload baru.`}
+        description={`Daftar lengkap drama dan mini series dari channel ${channel.name}, dengan judul Bahasa Indonesia. ${channelVideos.length} film tersedia, update otomatis tiap upload baru.`}
         path={`/channel/${channel.channelId}`}
         keywords={[
           channel.name,
@@ -192,7 +192,7 @@ export default function ChannelPage() {
               Semua drama dan mini series dari{" "}
               <span className="text-foreground font-medium">{channel.name}</span>
               . Judul otomatis diterjemahkan ke Bahasa Indonesia, daftar
-              ter-update tiap kreator upload episode baru.
+              ter-update tiap kreator upload tontonan baru.
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-foreground/70">
@@ -200,7 +200,7 @@ export default function ChannelPage() {
                 <Tv2 className="h-4 w-4 text-primary" />
                 <span>
                   <strong className="text-foreground">{channelVideos.length}</strong>{" "}
-                  episode
+                  film
                 </span>
               </div>
               {subIndoCount > 0 && (
@@ -260,17 +260,17 @@ export default function ChannelPage() {
           {channelVideos.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border/60 bg-card/40 p-10 text-center">
               <p className="text-foreground/70">
-                Belum ada episode dari channel ini. Coba refresh sebentar lagi.
+                Belum ada film dari channel ini. Coba refresh sebentar lagi.
               </p>
             </div>
           ) : (
             <>
               <div className="mb-6 flex items-end justify-between">
                 <h2 className="font-serif text-2xl sm:text-3xl tracking-tight">
-                  Semua episode
+                  Semua film
                 </h2>
                 <span className="text-sm text-foreground/60">
-                  {channelVideos.length} episode • diurutkan dari yang terbaru
+                  {channelVideos.length} film • diurutkan dari yang terbaru
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">

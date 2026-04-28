@@ -5,8 +5,12 @@ import {
   GenerateSynopsisResponse as SynopsisResult,
 } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
+import { aiLimiter } from "../lib/rate-limit";
+import { requireAdmin } from "../lib/admin-auth";
 
 const router: IRouter = Router();
+
+router.use("/synopsis", aiLimiter);
 
 const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
@@ -26,7 +30,7 @@ Aturan ketat:
 - Akhiri dengan kalimat yang membangun rasa penasaran agar penonton mau menonton.
 - Output HANYA paragraf sinopsis itu sendiri, tanpa label/heading.`;
 
-router.post("/synopsis", async (req, res): Promise<void> => {
+router.post("/synopsis", requireAdmin, async (req, res): Promise<void> => {
   if (!client) {
     res.status(503).json({
       error: "AI synopsis tidak tersedia (AI integration belum di-setup).",

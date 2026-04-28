@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "wouter";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import { Loader2, Tv2, RefreshCw, AlertCircle, Search } from "lucide-react";
 import {
@@ -23,8 +23,20 @@ export default function DramaPage() {
       refetchInterval: 5 * 60_000,
     },
   });
-  const [query, setQuery] = useState("");
+  const search = useSearch();
+  const initialQuery = useMemo(() => {
+    try {
+      return new URLSearchParams(search).get("q") ?? "";
+    } catch {
+      return "";
+    }
+  }, [search]);
+  const [query, setQuery] = useState(initialQuery);
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   const filtered = useMemo(() => {
     let list = videos.data ?? [];
@@ -78,8 +90,8 @@ export default function DramaPage() {
   return (
     <>
       <Seo
-        title="Daftar Drama China Sub Indo — Update Otomatis | CinemaStream"
-        description="Koleksi drama China, mini drama, dan short drama Mandarin terbaru. Judul Bahasa Indonesia, update otomatis tiap channel YouTube upload episode baru."
+        title="Daftar Film Drama China Sub Indo — Update Otomatis | CinemaStream"
+        description="Koleksi film drama China, mini drama, dan short drama Mandarin lengkap. Judul Bahasa Indonesia, update otomatis tiap channel YouTube upload tontonan baru."
         path="/drama"
         keywords={[
           "drama china",
@@ -121,7 +133,7 @@ export default function DramaPage() {
               <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-foreground/60">
                 <span>
                   <strong className="text-foreground">{videos.data?.length}</strong>{" "}
-                  episode
+                  film
                 </span>
                 <span>
                   <strong className="text-foreground">{channels.data?.length ?? 0}</strong>{" "}
@@ -260,7 +272,7 @@ export default function DramaPage() {
                   <div className="mb-4 flex items-center justify-between text-sm text-foreground/60">
                     <span>
                       Menampilkan <strong className="text-foreground">{filtered.length}</strong>{" "}
-                      episode
+                      film
                     </span>
                     {activeChannel && (
                       <button

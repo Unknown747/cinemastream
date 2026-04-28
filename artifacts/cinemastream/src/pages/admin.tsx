@@ -412,7 +412,137 @@ function VideoOverrideList() {
   );
 }
 
+type AdminStatus =
+  | { state: "loading" }
+  | { state: "open" }
+  | { state: "needs-login" }
+  | { state: "authenticated" }
+  | { state: "not-configured"; message: string };
+
+function useAdminStatus() {
+  const [status, setStatus] = useState<AdminStatus>({ state: "loading" });
+  const refresh = async () => {
+    try {
+      const res = await fetch("/api/admin/me", { credentials: "same-origin" });
+      if (!res.ok) {
+        setStatus({ state: "needs-login" });
+        return;
+      }
+      const data = (await res.json()) as {
+        authenticated?: boolean;
+        configured?: boolean;
+      };
+      if (!data.configured) {
+        setStatus({ state: "open" });
+      } else if (data.authenticated) {
+        setStatus({ state: "authenticated" });
+      } else {
+        setStatus({ state: "needs-login" });
+      }
+    } catch {
+      setStatus({ state: "needs-login" });
+    }
+  };
+  useEffect(() => {
+    void refresh();
+  }, []);
+  return { status, refresh, setStatus };
+}
+
+function AdminLoginForm({ onSuccess }: { onSuccess: () => void }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!password) return;
+        setPending(true);
+        setError(null);
+        try {
+          const res = await fetch("/api/admin/login", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+          if (!res.ok) {
+            const data = (await res.json().catch(() => ({}))) as {
+              error?: string;
+            };
+            setError(data.error || "Login gagal");
+            return;
+          }
+          setPassword("");
+          onSuccess();
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Login gagal");
+        } finally {
+          setPending(false);
+        }
+      }}
+      className="mx-auto mt-12 max-w-sm rounded-lg border border-border/60 bg-card/60 p-6"
+    >
+      <h2 className="font-serif text-2xl">Admin Login</h2>
+      <p className="mt-1 text-sm text-foreground/60">
+        Masukkan password admin untuk mengelola channel & artikel.
+      </p>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        autoComplete="current-password"
+        placeholder="Password"
+        className="mt-4 h-10 w-full rounded-md border border-border/60 bg-background px-3 text-sm focus:border-primary focus:outline-none"
+        data-testid="input-admin-password"
+        autoFocus
+      />
+      {error && (
+        <p className="mt-2 text-sm text-destructive" data-testid="text-admin-error">
+          {error}
+        </p>
+      )}
+      <Button
+        type="submit"
+        disabled={pending || !password}
+        className="mt-4 w-full"
+        data-testid="button-admin-login"
+      >
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Masuk"}
+      </Button>
+    </form>
+  );
+}
+
+function AdminLogoutButton({ onLogout }: { onLogout: () => void }) {
+  const [pending, setPending] = useState(false);
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={pending}
+      onClick={async () => {
+        setPending(true);
+        try {
+          await fetch("/api/admin/logout", {
+            method: "POST",
+            credentials: "same-origin",
+          });
+        } finally {
+          setPending(false);
+          onLogout();
+        }
+      }}
+      data-testid="button-admin-logout"
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Logout"}
+    </Button>
+  );
+}
+
 export default function AdminPage() {
+  const { status, refresh, setStatus } = useAdminStatus();
   return (
     <>
       <Seo
@@ -424,23 +554,48 @@ export default function AdminPage() {
 
       <section className="pt-28 pb-16">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          {status.state === "loading" && (
+            <div className="flex justify-center pt-20">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          )}
+
+          {status.state === "needs-login" && (
+            <AdminLoginForm onSuccess={refresh} />
+          )}
+
+          {(status.state === "authenticated" || status.state === "open") && (
+            <>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
+            className="flex items-start justify-between gap-4"
           >
-            <h1 className="font-serif text-4xl tracking-tight">Admin</h1>
-            <p className="mt-2 text-foreground/70">
-              Kelola channel YouTube yang ditampilkan di halaman Drama dan ganti
-              judul ke Bahasa Indonesia.
-            </p>
+            <div>
+              <h1 className="font-serif text-4xl tracking-tight">Admin</h1>
+              <p className="mt-2 text-foreground/70">
+                Kelola channel YouTube yang ditampilkan di halaman Drama dan ganti
+                judul ke Bahasa Indonesia.
+              </p>
+              {status.state === "open" && (
+                <p className="mt-2 text-xs text-amber-500/90" data-testid="text-admin-open-warning">
+                  ⚠ ADMIN_PASSWORD belum di-set di server — halaman ini terbuka tanpa autentikasi.
+                </p>
+              )}
+            </div>
+            {status.state === "authenticated" && (
+              <AdminLogoutButton
+                onLogout={() => setStatus({ state: "needs-login" })}
+              />
+            )}
           </motion.div>
 
           <section className="mt-10">
             <h2 className="mb-3 font-serif text-2xl">Channel</h2>
             <p className="mb-4 text-sm text-foreground/60">
               Tambah channel YouTube. Daftar video akan ter-update otomatis saat
-              channel meng-upload episode baru.
+              channel meng-upload tontonan baru.
             </p>
             <ChannelForm />
             <div className="mt-4">
@@ -467,6 +622,8 @@ export default function AdminPage() {
             </p>
             <ArticleAdmin />
           </section>
+            </>
+          )}
         </div>
       </section>
     </>

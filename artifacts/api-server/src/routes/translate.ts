@@ -2,8 +2,12 @@ import { Router, type IRouter } from "express";
 import OpenAI from "openai";
 import { TranslateTextBody, TranslateTextResponse } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
+import { aiLimiter } from "../lib/rate-limit";
+import { requireAdmin } from "../lib/admin-auth";
 
 const router: IRouter = Router();
+
+router.use("/translate", aiLimiter);
 
 const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
@@ -20,7 +24,7 @@ Aturan:
 - Jangan mentransliterasi nama karakter; gunakan nama Mandarin asli (Pinyin) bila perlu.
 - Maksimal 100 karakter.`;
 
-router.post("/translate", async (req, res): Promise<void> => {
+router.post("/translate", requireAdmin, async (req, res): Promise<void> => {
   if (!client) {
     res
       .status(503)

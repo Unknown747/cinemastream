@@ -177,7 +177,7 @@ export default function DramaDetailPage() {
 
               <AdSlot slot={import.meta.env.VITE_ADSENSE_SLOT_IN_ARTICLE} format="fluid" layout="in-article" />
 
-              <h2 className="mt-8 font-serif text-xl">Tentang episode ini</h2>
+              <h2 className="mt-8 font-serif text-xl">Tentang film ini</h2>
               <VideoDescription
                 description={video.description}
                 channelName={video.channelName}
@@ -190,7 +190,7 @@ export default function DramaDetailPage() {
               <h2 className="font-serif text-xl">Episode lain</h2>
               <div className="mt-4 flex flex-col gap-3">
                 {related.length === 0 && (
-                  <p className="text-sm text-foreground/60">Tidak ada episode lain.</p>
+                  <p className="text-sm text-foreground/60">Tidak ada film lain.</p>
                 )}
                 {related.map((r) => (
                   <Link

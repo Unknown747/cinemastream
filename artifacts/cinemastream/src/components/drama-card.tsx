@@ -44,7 +44,7 @@ export function DramaCard({
   index: _index = 0,
   size = "md",
   showChannel: _showChannel = true,
-  type = "Drama",
+  type = "Film",
 }: DramaCardProps) {
   const year = new Date(video.publishedAt).getFullYear();
   const titleClass =

@@ -4,8 +4,12 @@ import { db, channelsTable } from "@workspace/db";
 import { AddChannelBody, ListChannelsResponseItem } from "@workspace/api-zod";
 import { resolveChannel, invalidateVideoCache } from "../lib/youtube";
 import { logger } from "../lib/logger";
+import { requireAdmin } from "../lib/admin-auth";
+import { videosLimiter } from "../lib/rate-limit";
 
 const router: IRouter = Router();
+
+router.use("/channels", videosLimiter);
 
 router.get("/channels", async (_req, res) => {
   const rows = await db.select().from(channelsTable).orderBy(channelsTable.createdAt);
@@ -21,7 +25,7 @@ router.get("/channels", async (_req, res) => {
   res.json(data);
 });
 
-router.post("/channels", async (req, res) => {
+router.post("/channels", requireAdmin, async (req, res) => {
   const parsed = AddChannelBody.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.message });
@@ -66,7 +70,7 @@ router.post("/channels", async (req, res) => {
   }
 });
 
-router.delete("/channels/:id", async (req, res) => {
+router.delete("/channels/:id", requireAdmin, async (req, res) => {
   const { id } = req.params;
   const deleted = await db
     .delete(channelsTable)

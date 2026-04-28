@@ -7,6 +7,7 @@ import {
   GetArticleResponse,
 } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
+import { requireAdmin } from "../lib/admin-auth";
 
 const router: IRouter = Router();
 
@@ -50,7 +51,7 @@ router.get("/articles/:slug", async (req, res) => {
   res.json(serialize(rows[0]));
 });
 
-router.post("/articles", async (req, res) => {
+router.post("/articles", requireAdmin, async (req, res) => {
   const parsed = CreateArticleBody.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.message });
@@ -80,7 +81,7 @@ router.post("/articles", async (req, res) => {
   }
 });
 
-router.put("/articles/:id/by-id", async (req, res) => {
+router.put("/articles/:id/by-id", requireAdmin, async (req, res) => {
   const { id } = req.params;
   const parsed = UpdateArticleBody.safeParse(req.body);
   if (!parsed.success) {
@@ -127,7 +128,7 @@ router.put("/articles/:id/by-id", async (req, res) => {
   }
 });
 
-router.delete("/articles/:id/by-id", async (req, res) => {
+router.delete("/articles/:id/by-id", requireAdmin, async (req, res) => {
   const { id } = req.params;
   await db.delete(articlesTable).where(eq(articlesTable.id, id));
   res.status(204).end();

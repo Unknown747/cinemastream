@@ -8,10 +8,12 @@ import synopsisRouter from "./synopsis";
 import sitemapRouter from "./sitemap";
 import articlesRouter from "./articles";
 import feedRouter from "./feed";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(adminRouter);
 router.use(channelsRouter);
 router.use(videosRouter);
 router.use(overridesRouter);
