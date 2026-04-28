@@ -7,6 +7,7 @@ import { Seo } from "@/components/seo";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { YouTubeAttribution } from "@/components/youtube-attribution";
 import { VideoDescription } from "@/components/video-description";
+import { StreamingPlayer } from "@/components/streaming-player";
 import { AdSlot } from "@/components/ad-slot";
 
 export default function DramaDetailPage() {
@@ -137,16 +138,13 @@ export default function DramaDetailPage() {
             className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]"
           >
             <div>
-              <div className="overflow-hidden rounded-xl border border-border/60 bg-black aspect-video">
-                <iframe
-                  key={video.videoId}
-                  src={`https://www.youtube.com/embed/${video.videoId}?rel=0&modestbranding=1&autoplay=1`}
-                  title={video.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="h-full w-full"
-                />
-              </div>
+              <StreamingPlayer
+                videoId={video.videoId}
+                title={video.title}
+                channelName={video.channelName}
+                thumbnailUrl={video.thumbnailUrl}
+                publishedDate={publishedDate}
+              />
 
               <h1 className="mt-6 font-serif text-2xl sm:text-3xl leading-tight">
                 {video.title}
