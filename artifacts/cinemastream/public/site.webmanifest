@@ -1,18 +1,43 @@
 {
   "name": "CinemaStream — Drama China Sub Indo",
   "short_name": "CinemaStream",
-  "description": "Nonton drama China dan mini series Mandarin dengan judul Bahasa Indonesia, update otomatis.",
-  "start_url": "/",
+  "description": "Nonton drama China dan mini series Mandarin dengan judul Bahasa Indonesia, update otomatis dari channel YouTube.",
+  "start_url": "/?utm_source=pwa",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0e0c0a",
   "theme_color": "#0e0c0a",
   "lang": "id-ID",
+  "dir": "ltr",
+  "categories": ["entertainment", "video", "movies"],
   "icons": [
     {
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Daftar Drama",
+      "short_name": "Drama",
+      "url": "/drama",
+      "description": "Lihat semua drama China terbaru"
+    },
+    {
+      "name": "Daftar Tonton Saya",
+      "short_name": "Daftar Saya",
+      "url": "/watchlist",
+      "description": "Film yang kamu simpan dan riwayat tontonan"
+    },
+    {
+      "name": "Artikel",
+      "short_name": "Artikel",
+      "url": "/blog",
+      "description": "Ulasan dan rekomendasi drama"
     }
   ]
 }

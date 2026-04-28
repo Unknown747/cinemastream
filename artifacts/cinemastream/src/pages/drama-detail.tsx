@@ -188,8 +188,14 @@ export default function DramaDetailPage() {
         path={`/drama/${video.videoId}`}
         ogImage={video.thumbnailUrl}
         imageAlt={`Cuplikan ${video.title}`}
-        ogType="video.other"
+        ogType="video.movie"
         publishedTime={video.publishedAt}
+        modifiedTime={video.publishedAt}
+        videoUrl={`https://www.youtube.com/embed/${video.videoId}`}
+        videoSecureUrl={`https://www.youtube.com/embed/${video.videoId}`}
+        videoType="text/html"
+        videoWidth={1280}
+        videoHeight={720}
         keywords={[
           "drama china",
           "drama mandarin",

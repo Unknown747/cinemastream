@@ -27,3 +27,4 @@ Disallow: /watchlist
 # Sitemaps
 Sitemap: https://cinemastream.app/sitemap.xml
 Sitemap: https://cinemastream.app/api/sitemap-drama.xml
+Sitemap: https://cinemastream.app/api/sitemap-videos.xml

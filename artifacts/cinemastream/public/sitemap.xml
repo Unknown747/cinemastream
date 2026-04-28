@@ -6,4 +6,7 @@
   <sitemap>
     <loc>https://cinemastream.app/api/sitemap-drama.xml</loc>
   </sitemap>
+  <sitemap>
+    <loc>https://cinemastream.app/api/sitemap-videos.xml</loc>
+  </sitemap>
 </sitemapindex>

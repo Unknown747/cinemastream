@@ -115,9 +115,18 @@ export default function DramaPage() {
   return (
     <>
       <Seo
-        title="Daftar Film Drama China Sub Indo — Update Otomatis | CinemaStream"
-        description="Koleksi film drama China, mini drama, dan short drama Mandarin lengkap. Judul Bahasa Indonesia, update otomatis tiap channel YouTube upload tontonan baru."
+        title={
+          query
+            ? `Cari "${query}" — Drama China Sub Indo | CinemaStream`
+            : "Daftar Film Drama China Sub Indo — Update Otomatis | CinemaStream"
+        }
+        description={
+          query
+            ? `Hasil pencarian "${query}" di CinemaStream. Drama China dan mini series dengan judul Bahasa Indonesia.`
+            : "Koleksi film drama China, mini drama, dan short drama Mandarin lengkap. Judul Bahasa Indonesia, update otomatis tiap channel YouTube upload tontonan baru."
+        }
         path="/drama"
+        noindex={Boolean(query)}
         keywords={[
           "drama china",
           "drama mandarin",

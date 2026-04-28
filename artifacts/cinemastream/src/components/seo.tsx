@@ -15,7 +15,13 @@ type SeoProps = {
   noindex?: boolean;
   jsonLd?: object | object[];
   publishedTime?: string;
+  modifiedTime?: string;
   locale?: string;
+  videoUrl?: string;
+  videoSecureUrl?: string;
+  videoType?: string;
+  videoWidth?: number;
+  videoHeight?: number;
 };
 
 const SITE_NAME = SITE_NAME_CONST;
@@ -36,7 +42,13 @@ export function Seo({
   noindex,
   jsonLd,
   publishedTime,
+  modifiedTime,
   locale = DEFAULT_LOCALE,
+  videoUrl,
+  videoSecureUrl,
+  videoType,
+  videoWidth,
+  videoHeight,
 }: SeoProps) {
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`;
   const resolvedPath = path ?? pathname;
@@ -87,6 +99,20 @@ export function Seo({
       <meta property="og:locale" content={locale} />
       {publishedTime && (
         <meta property="article:published_time" content={publishedTime} />
+      )}
+      {modifiedTime && (
+        <meta property="article:modified_time" content={modifiedTime} />
+      )}
+      {videoUrl && <meta property="og:video" content={videoUrl} />}
+      {videoSecureUrl && (
+        <meta property="og:video:secure_url" content={videoSecureUrl} />
+      )}
+      {videoType && <meta property="og:video:type" content={videoType} />}
+      {videoWidth && (
+        <meta property="og:video:width" content={String(videoWidth)} />
+      )}
+      {videoHeight && (
+        <meta property="og:video:height" content={String(videoHeight)} />
       )}
 
       <meta name="twitter:card" content="summary_large_image" />
