@@ -22,6 +22,8 @@ import type {
   Channel,
   HealthStatus,
   ListArticlesParams,
+  SynopsisInput,
+  SynopsisResult,
   TranslateInput,
   TranslateResult,
   UpsertArticleInput,
@@ -777,6 +779,92 @@ export const useTranslateText = <
   TContext
 > => {
   return useMutation(getTranslateTextMutationOptions(options));
+};
+
+/**
+ * @summary AI-generate a clean Indonesian synopsis from a drama title
+ */
+export const getGenerateSynopsisUrl = () => {
+  return `/api/synopsis`;
+};
+
+export const generateSynopsis = async (
+  synopsisInput: SynopsisInput,
+  options?: RequestInit,
+): Promise<SynopsisResult> => {
+  return customFetch<SynopsisResult>(getGenerateSynopsisUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(synopsisInput),
+  });
+};
+
+export const getGenerateSynopsisMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateSynopsis>>,
+    TError,
+    { data: BodyType<SynopsisInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateSynopsis>>,
+  TError,
+  { data: BodyType<SynopsisInput> },
+  TContext
+> => {
+  const mutationKey = ["generateSynopsis"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateSynopsis>>,
+    { data: BodyType<SynopsisInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateSynopsis(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateSynopsisMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateSynopsis>>
+>;
+export type GenerateSynopsisMutationBody = BodyType<SynopsisInput>;
+export type GenerateSynopsisMutationError = ErrorType<unknown>;
+
+/**
+ * @summary AI-generate a clean Indonesian synopsis from a drama title
+ */
+export const useGenerateSynopsis = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateSynopsis>>,
+    TError,
+    { data: BodyType<SynopsisInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateSynopsis>>,
+  TError,
+  { data: BodyType<SynopsisInput> },
+  TContext
+> => {
+  return useMutation(getGenerateSynopsisMutationOptions(options));
 };
 
 /**

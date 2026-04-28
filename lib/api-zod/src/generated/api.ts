@@ -139,6 +139,32 @@ export const TranslateTextResponse = zod.object({
 });
 
 /**
+ * @summary AI-generate a clean Indonesian synopsis from a drama title
+ */
+export const generateSynopsisBodyTitleMax = 500;
+
+export const generateSynopsisBodyChannelNameMax = 200;
+
+export const GenerateSynopsisBody = zod.object({
+  title: zod
+    .string()
+    .min(1)
+    .max(generateSynopsisBodyTitleMax)
+    .describe("Drama title (in any language) to generate a synopsis for"),
+  channelName: zod
+    .string()
+    .max(generateSynopsisBodyChannelNameMax)
+    .nullish()
+    .describe("Optional channel\/source name for context"),
+});
+
+export const GenerateSynopsisResponse = zod.object({
+  synopsis: zod
+    .string()
+    .describe("Short, original 2-3 sentence Indonesian synopsis"),
+});
+
+/**
  * @summary List articles (published only by default)
  */
 export const ListArticlesQueryParams = zod.object({

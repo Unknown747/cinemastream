@@ -8,6 +8,7 @@ import {
 } from "@workspace/db";
 import { ListChannelVideosResponseItem } from "@workspace/api-zod";
 import { fetchChannelVideosCached, type RssVideo } from "../lib/youtube";
+import { cleanVideoDescription } from "../lib/clean-description";
 import { logger } from "../lib/logger";
 import {
   containsChinese,
@@ -83,7 +84,8 @@ async function buildVideos(rss: RssVideo[]): Promise<unknown[]> {
   return rss.map((v) => {
     const o = map.get(v.videoId);
     const title = o?.title?.trim() || v.title;
-    const description = o?.description?.trim() || v.description;
+    const cleanedRawDesc = cleanVideoDescription(v.description, v.channelName);
+    const description = o?.description?.trim() || cleanedRawDesc;
     return ListChannelVideosResponseItem.parse({
       videoId: v.videoId,
       channelId: v.channelId,

@@ -6,6 +6,7 @@ import { useListAllVideos, getListAllVideosQueryKey } from "@workspace/api-clien
 import { Seo } from "@/components/seo";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { YouTubeAttribution } from "@/components/youtube-attribution";
+import { VideoDescription } from "@/components/video-description";
 import { AdSlot } from "@/components/ad-slot";
 
 export default function DramaDetailPage() {
@@ -179,15 +180,11 @@ export default function DramaDetailPage() {
               <AdSlot slot={import.meta.env.VITE_ADSENSE_SLOT_IN_ARTICLE} format="fluid" layout="in-article" />
 
               <h2 className="mt-8 font-serif text-xl">Tentang episode ini</h2>
-              <div className="mt-3 whitespace-pre-wrap text-sm text-foreground/80 leading-relaxed">
-                {video.description || (
-                  <span className="text-foreground/50">
-                    Belum ada deskripsi dari kreator. Silakan tonton video di
-                    atas untuk sinopsis dan trailer langsung dari{" "}
-                    {video.channelName}.
-                  </span>
-                )}
-              </div>
+              <VideoDescription
+                description={video.description}
+                channelName={video.channelName}
+                hasOverride={video.hasOverride}
+              />
             </div>
 
             <aside>

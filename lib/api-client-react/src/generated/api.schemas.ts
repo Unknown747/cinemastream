@@ -63,6 +63,25 @@ export interface TranslateResult {
   translation: string;
 }
 
+export interface SynopsisInput {
+  /**
+   * Drama title (in any language) to generate a synopsis for
+   * @minLength 1
+   * @maxLength 500
+   */
+  title: string;
+  /**
+   * Optional channel/source name for context
+   * @maxLength 200
+   */
+  channelName?: string | null;
+}
+
+export interface SynopsisResult {
+  /** Short, original 2-3 sentence Indonesian synopsis */
+  synopsis: string;
+}
+
 export type ArticleStatus = (typeof ArticleStatus)[keyof typeof ArticleStatus];
 
 export const ArticleStatus = {

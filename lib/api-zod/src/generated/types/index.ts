@@ -12,6 +12,8 @@ export * from "./articleStatus";
 export * from "./channel";
 export * from "./healthStatus";
 export * from "./listArticlesParams";
+export * from "./synopsisInput";
+export * from "./synopsisResult";
 export * from "./translateInput";
 export * from "./translateResult";
 export * from "./upsertArticleInput";
