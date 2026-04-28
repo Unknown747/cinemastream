@@ -7,6 +7,7 @@ import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import HomePage from "@/pages/home";
 import BrowsePage from "@/pages/browse";
+import FilmDetailPage from "@/pages/film-detail";
 import MovieDetailPage from "@/pages/movie-detail";
 import GenrePage from "@/pages/genre";
 import AboutPage from "@/pages/about";
@@ -30,6 +31,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/browse" component={BrowsePage} />
+      <Route path="/film/:slug" component={FilmDetailPage} />
       <Route path="/movie/:id" component={MovieDetailPage} />
       <Route path="/genre/:slug" component={GenrePage} />
       <Route path="/drama" component={DramaPage} />

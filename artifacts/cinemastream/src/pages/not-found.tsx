@@ -1,3 +1,4 @@
+import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
 import { useMemo } from "react";
 import { Link } from "wouter";
 import { Tv2, Search } from "lucide-react";
@@ -69,7 +70,7 @@ export default function NotFound() {
                 {suggestions.map((v) => (
                   <li key={v.videoId}>
                     <Link
-                      href={`/drama/${v.videoId}`}
+                      href={filmHrefForVideo(v.title, v.videoId)}
                       className="group block rounded-md border border-border/60 bg-card/40 overflow-hidden hover:border-primary/40 transition"
                       data-testid={`link-404-suggestion-${v.videoId}`}
                     >

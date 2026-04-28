@@ -1,3 +1,4 @@
+import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
 import { useRef } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -99,7 +100,7 @@ export function DramaRail({
               className="flex-none w-[60vw] sm:w-[38vw] md:w-[28vw] lg:w-[22vw] xl:w-[18vw] snap-start"
             >
               <Link
-                href={`/drama/${v.videoId}`}
+                href={filmHrefForVideo(v.title, v.videoId)}
                 className="group block overflow-hidden rounded-lg border border-border/60 bg-card/40 transition-colors hover:border-primary/40"
                 data-testid={`link-rail-drama-${v.videoId}`}
               >

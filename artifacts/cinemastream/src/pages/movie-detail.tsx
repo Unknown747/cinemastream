@@ -11,11 +11,14 @@ import {
   youtubeBackdrop,
   genreSlug,
 } from "@/data/movies";
+import { filmHrefForMovie } from "@/lib/slug";
 import NotFound from "@/pages/not-found";
 
 export default function MovieDetailPage() {
-  const [, params] = useRoute("/movie/:id");
-  const movie = params?.id ? getMovieById(params.id) : undefined;
+  const [, filmParams] = useRoute<{ slug: string }>("/film/:slug");
+  const [, legacyParams] = useRoute<{ id: string }>("/movie/:id");
+  const id = filmParams?.slug ?? legacyParams?.id;
+  const movie = id ? getMovieById(id) : undefined;
 
   if (!movie) return <NotFound />;
 
@@ -57,7 +60,7 @@ export default function MovieDetailPage() {
         description={movie.synopsis}
         image={youtubeBackdrop(movie.youtubeId)}
         type="video.movie"
-        pathname={`/movie/${movie.id}`}
+        pathname={filmHrefForMovie(movie.id)}
         jsonLd={[movieJsonLd, videoJsonLd]}
       />
 

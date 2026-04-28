@@ -1,3 +1,4 @@
+import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearch } from "wouter";
 import { motion } from "framer-motion";
@@ -97,7 +98,7 @@ export default function DramaPage() {
       itemListElement: filtered.slice(0, 30).map((v, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: absoluteUrl(`/drama/${v.videoId}`),
+        url: absoluteUrl(filmHrefForVideo(v.title, v.videoId)),
         name: v.title,
       })),
     };

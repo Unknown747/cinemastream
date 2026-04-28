@@ -1,3 +1,4 @@
+import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
 import { useMemo } from "react";
 import { Link, useRoute } from "wouter";
 import { motion } from "framer-motion";
@@ -104,7 +105,7 @@ export default function ChannelPage() {
           itemListElement: channelVideos.slice(0, 30).map((v, i) => ({
             "@type": "ListItem",
             position: i + 1,
-            url: absoluteUrl(`/drama/${v.videoId}`),
+            url: absoluteUrl(filmHrefForVideo(v.title, v.videoId)),
             name: v.title,
           })),
         }
@@ -224,7 +225,7 @@ export default function ChannelPage() {
 
             {heroVideo && (
               <div className="mt-7 flex flex-wrap gap-3">
-                <Link href={`/drama/${heroVideo.videoId}`}>
+                <Link href={filmHrefForVideo(heroVideo.title, heroVideo.videoId)}>
                   <Button
                     size="lg"
                     className="rounded-full px-7 h-12 text-base font-semibold gap-2 shadow-2xl shadow-primary/20"

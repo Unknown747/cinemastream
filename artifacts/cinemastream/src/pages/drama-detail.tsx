@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
+import { extractVideoIdFromSlug, filmHrefForVideo } from "@/lib/slug";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -26,8 +27,12 @@ import { detectTags } from "@/lib/video-meta";
 import { absoluteUrl } from "@/lib/site";
 
 export default function DramaDetailPage() {
-  const [, params] = useRoute<{ videoId: string }>("/drama/:videoId");
-  const videoId = params?.videoId ?? "";
+  const [, filmParams] = useRoute<{ slug: string }>("/film/:slug");
+  const [, legacyParams] = useRoute<{ videoId: string }>("/drama/:videoId");
+  const slug = filmParams?.slug ?? legacyParams?.videoId ?? "";
+  const videoId =
+    extractVideoIdFromSlug(slug) ??
+    (legacyParams?.videoId ?? "");
   const { data, isLoading } = useListAllVideos({
     query: { queryKey: getListAllVideosQueryKey(), staleTime: 60_000 },
   });
@@ -36,6 +41,15 @@ export default function DramaDetailPage() {
     () => data?.find((v) => v.videoId === videoId),
     [data, videoId],
   );
+
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    if (!video) return;
+    const canonical = filmHrefForVideo(video.title, video.videoId);
+    if (canonical !== `/film/${slug}` && canonical !== `/drama/${slug}`) {
+      setLocation(canonical, { replace: true });
+    }
+  }, [video, slug, setLocation]);
 
   const related = useMemo(() => {
     const all = data ?? [];
@@ -81,10 +95,11 @@ export default function DramaDetailPage() {
 
   const handleShare = async () => {
     if (!video) return;
+    const filmPath = filmHrefForVideo(video.title, video.videoId);
     const shareUrl =
       typeof window !== "undefined"
-        ? `${window.location.origin}/drama/${video.videoId}`
-        : `/drama/${video.videoId}`;
+        ? `${window.location.origin}${filmPath}`
+        : filmPath;
     const shareData = {
       title: video.title,
       text: `Nonton ${video.title} di CinemaStream`,
@@ -185,7 +200,7 @@ export default function DramaDetailPage() {
           video.description?.slice(0, 200) ||
           `Tonton ${video.title} di CinemaStream. Drama China dengan judul Bahasa Indonesia, update otomatis dari channel ${video.channelName}.`
         }
-        path={`/drama/${video.videoId}`}
+        path={filmHrefForVideo(video.title, video.videoId)}
         ogImage={video.thumbnailUrl}
         imageAlt={`Cuplikan ${video.title}`}
         ogType="video.movie"
@@ -207,7 +222,7 @@ export default function DramaDetailPage() {
           {
             "@context": "https://schema.org",
             "@type": "VideoObject",
-            "@id": absoluteUrl(`/drama/${video.videoId}#video`),
+            "@id": absoluteUrl(`${filmHrefForVideo(video.title, video.videoId)}#video`),
             name: video.title,
             alternateName: video.originalTitle,
             description:
@@ -217,7 +232,7 @@ export default function DramaDetailPage() {
             uploadDate: video.publishedAt,
             embedUrl: `https://www.youtube.com/embed/${video.videoId}`,
             contentUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
-            url: absoluteUrl(`/drama/${video.videoId}`),
+            url: absoluteUrl(filmHrefForVideo(video.title, video.videoId)),
             inLanguage: ["zh-CN", "id-ID"],
             isFamilyFriendly: true,
             isAccessibleForFree: true,
@@ -235,14 +250,14 @@ export default function DramaDetailPage() {
             },
             potentialAction: {
               "@type": "WatchAction",
-              target: absoluteUrl(`/drama/${video.videoId}`),
+              target: absoluteUrl(filmHrefForVideo(video.title, video.videoId)),
             },
           },
           {
             "@context": "https://schema.org",
             "@type": "WebPage",
-            "@id": absoluteUrl(`/drama/${video.videoId}`),
-            url: absoluteUrl(`/drama/${video.videoId}`),
+            "@id": absoluteUrl(filmHrefForVideo(video.title, video.videoId)),
+            url: absoluteUrl(filmHrefForVideo(video.title, video.videoId)),
             name: `${video.title} — Nonton di CinemaStream`,
             inLanguage: "id-ID",
             isPartOf: {
@@ -267,7 +282,7 @@ export default function DramaDetailPage() {
                 "@type": "ListItem",
                 position: 3,
                 name: video.title,
-                item: absoluteUrl(`/drama/${video.videoId}`),
+                item: absoluteUrl(filmHrefForVideo(video.title, video.videoId)),
               },
             ],
           },
@@ -409,7 +424,7 @@ export default function DramaDetailPage() {
                 {related.map((r) => (
                   <Link
                     key={r.videoId}
-                    href={`/drama/${r.videoId}`}
+                    href={filmHrefForVideo(r.title, r.videoId)}
                     className="group flex gap-3 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2 transition-colors hover:border-primary/40"
                     data-testid={`link-related-${r.videoId}`}
                   >

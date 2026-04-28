@@ -1,3 +1,4 @@
+import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
 import { useEffect, useState, type MouseEvent } from "react";
 import { Link } from "wouter";
 import { Bookmark, BookmarkCheck, Play } from "lucide-react";
@@ -102,7 +103,7 @@ export function DramaCard({
   return (
     <article className="group relative">
       <Link
-        href={`/drama/${video.videoId}`}
+        href={filmHrefForVideo(video.title, video.videoId)}
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
         data-testid={`link-drama-card-${video.videoId}`}
       >

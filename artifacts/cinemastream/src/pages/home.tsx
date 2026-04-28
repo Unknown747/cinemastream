@@ -1,3 +1,4 @@
+import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
@@ -172,7 +173,7 @@ export default function HomePage() {
       itemListElement: visible.slice(0, 12).map((v, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: absoluteUrl(`/drama/${v.videoId}`),
+        url: absoluteUrl(filmHrefForVideo(v.title, v.videoId)),
         name: v.title,
       })),
     };
@@ -265,7 +266,7 @@ export default function HomePage() {
                     data-testid={`card-continue-${h.videoId}`}
                   >
                     <Link
-                      href={`/drama/${h.videoId}`}
+                      href={filmHrefForVideo(h.title, h.videoId)}
                       className="block"
                     >
                       <div className="relative aspect-video bg-black">
@@ -538,7 +539,7 @@ export default function HomePage() {
           </div>
           {pinned ? (
             <Link
-              href={`/drama/${pinned.videoId}`}
+              href={filmHrefForVideo(pinned.title, pinned.videoId)}
               className="flex items-center justify-between gap-3 rounded-md px-4 py-3 text-sm font-medium hover:opacity-90 transition"
               style={{ background: "rgba(30, 50, 60, 0.85)" }}
               data-testid="link-pinned"

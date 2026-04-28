@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { db, channelsTable, articlesTable } from "@workspace/db";
 import { fetchChannelVideosCached } from "../lib/youtube";
 import { logger } from "../lib/logger";
+import { filmPathForVideo } from "../lib/slug";
 
 const router: IRouter = Router();
 
@@ -58,9 +59,9 @@ router.get("/feed.xml", async (req, res) => {
 
     const videoItems: Item[] = allVideos.slice(0, 30).map((v) => ({
       title: v.title,
-      link: `${origin}/drama/${v.videoId}`,
+      link: `${origin}${filmPathForVideo(v.title, v.videoId)}`,
       pubDate: new Date(v.publishedAt).toUTCString(),
-      guid: `${origin}/drama/${v.videoId}`,
+      guid: `${origin}${filmPathForVideo(v.title, v.videoId)}`,
       description: `${v.channelName} — ${v.description.slice(0, 280)}`,
       category: "Drama",
     }));

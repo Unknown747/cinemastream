@@ -3,6 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { db, channelsTable, articlesTable } from "@workspace/db";
 import { fetchChannelVideosCached } from "../lib/youtube";
 import { logger } from "../lib/logger";
+import { filmPathForVideo } from "../lib/slug";
 
 const router: IRouter = Router();
 
@@ -33,7 +34,7 @@ router.get("/sitemap-videos.xml", async (req, res) => {
 
     const items = allVideos
       .map((v) => {
-        const pageUrl = `${origin}/drama/${v.videoId}`;
+        const pageUrl = `${origin}${filmPathForVideo(v.title, v.videoId)}`;
         const embedUrl = `https://www.youtube.com/embed/${v.videoId}`;
         const watchUrl = `https://www.youtube.com/watch?v=${v.videoId}`;
         const desc = (v.description ?? `Tonton ${v.title} di CinemaStream.`).slice(
@@ -99,7 +100,7 @@ router.get("/sitemap-drama.xml", async (req, res) => {
     }
     for (const v of allVideos) {
       urls.push({
-        loc: `${origin}/drama/${v.videoId}`,
+        loc: `${origin}${filmPathForVideo(v.title, v.videoId)}`,
         lastmod: v.publishedAt,
       });
     }

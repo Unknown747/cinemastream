@@ -1,3 +1,4 @@
+import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Bookmark, History, Trash2, Play } from "lucide-react";
@@ -113,7 +114,7 @@ export default function WatchlistPage() {
                     data-testid={`row-watchlist-${w.videoId}`}
                   >
                     <Link
-                      href={`/drama/${w.videoId}`}
+                      href={filmHrefForVideo(w.title, w.videoId)}
                       className="relative aspect-video w-32 shrink-0 overflow-hidden rounded bg-black"
                     >
                       <img
@@ -125,7 +126,7 @@ export default function WatchlistPage() {
                     </Link>
                     <div className="min-w-0 flex-1 py-0.5">
                       <Link
-                        href={`/drama/${w.videoId}`}
+                        href={filmHrefForVideo(w.title, w.videoId)}
                         className="block text-sm font-semibold leading-snug line-clamp-2 hover:text-primary"
                       >
                         {w.title}
@@ -195,7 +196,7 @@ export default function WatchlistPage() {
                         data-testid={`row-history-${h.videoId}`}
                       >
                         <Link
-                          href={`/drama/${h.videoId}`}
+                          href={filmHrefForVideo(h.title, h.videoId)}
                           className="relative aspect-video w-36 shrink-0 overflow-hidden rounded bg-black"
                         >
                           <img
@@ -218,7 +219,7 @@ export default function WatchlistPage() {
                         </Link>
                         <div className="min-w-0 flex-1 py-0.5">
                           <Link
-                            href={`/drama/${h.videoId}`}
+                            href={filmHrefForVideo(h.title, h.videoId)}
                             className="block text-sm font-semibold leading-snug line-clamp-2 hover:text-primary"
                           >
                             {h.title}

@@ -1,3 +1,4 @@
+import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Play, Clock } from "lucide-react";
@@ -25,7 +26,7 @@ export function MovieCard({ movie, index = 0, variant = "poster" }: MovieCardPro
       }}
     >
       <Link
-        href={`/movie/${movie.id}`}
+        href={filmHrefForMovie(movie.id)}
         className="group block"
         data-testid={`link-movie-${movie.id}`}
       >
