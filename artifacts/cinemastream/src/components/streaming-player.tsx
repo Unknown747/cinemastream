@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Play, Monitor, Maximize2, Volume2 } from "lucide-react";
 
 interface Props {
@@ -9,6 +9,118 @@ interface Props {
   publishedDate?: string;
 }
 
+type CaptionTrack = {
+  languageCode: string;
+  languageName?: string;
+  displayName?: string;
+  is_translateable?: boolean;
+  isTranslateable?: boolean;
+  kind?: string;
+  vss_id?: string;
+};
+
+type YTPlayer = {
+  loadModule: (mod: string) => void;
+  unloadModule: (mod: string) => void;
+  setOption: (mod: string, opt: string, value: unknown) => void;
+  getOption: (mod: string, opt: string) => unknown;
+  getOptions: (mod?: string) => string[];
+  destroy: () => void;
+  addEventListener: (ev: string, fn: (e: unknown) => void) => void;
+};
+
+declare global {
+  interface Window {
+    YT?: {
+      Player: new (
+        el: HTMLElement | string,
+        cfg: Record<string, unknown>,
+      ) => YTPlayer;
+      PlayerState: {
+        PLAYING: number;
+        PAUSED: number;
+        ENDED: number;
+        BUFFERING: number;
+        CUED: number;
+      };
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+let ytApiPromise: Promise<void> | null = null;
+
+function loadYouTubeAPI(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (window.YT?.Player) return Promise.resolve();
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise<void>((resolve) => {
+    const prevReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      prevReady?.();
+      resolve();
+    };
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  });
+  return ytApiPromise;
+}
+
+function tryEnableIndonesianCaptions(player: YTPlayer) {
+  try {
+    player.loadModule("captions");
+  } catch {
+    /* noop */
+  }
+
+  const apply = () => {
+    try {
+      player.loadModule("captions");
+      const tracksRaw = player.getOption("captions", "tracklist");
+      const tracks: CaptionTrack[] = Array.isArray(tracksRaw)
+        ? (tracksRaw as CaptionTrack[])
+        : [];
+
+      // 1) If a real Indonesian track exists, just use it.
+      const idTrack = tracks.find(
+        (t) => t.languageCode?.toLowerCase() === "id",
+      );
+      if (idTrack) {
+        player.setOption("captions", "track", { languageCode: "id" });
+        player.setOption("captions", "reload", true);
+        return;
+      }
+
+      // 2) Otherwise pick a source track and ask YouTube to auto-translate it
+      //    to Indonesian. Prefer Chinese (zh*) since most channels we follow
+      //    are Mandarin; fall back to whatever track is available.
+      const source =
+        tracks.find((t) => t.languageCode?.toLowerCase().startsWith("zh")) ||
+        tracks.find((t) => t.languageCode?.toLowerCase().startsWith("en")) ||
+        tracks[0];
+
+      if (source) {
+        player.setOption("captions", "track", {
+          languageCode: source.languageCode,
+          translationLanguage: {
+            languageCode: "id",
+            languageName: "Indonesian",
+          },
+        });
+        player.setOption("captions", "reload", true);
+      }
+    } catch {
+      /* captions module may not be ready yet */
+    }
+  };
+
+  // Try a few times because the captions module needs the video to start
+  // playing before tracklist is populated.
+  const timers = [400, 1200, 2500, 5000];
+  timers.forEach((t) => setTimeout(apply, t));
+}
+
 export function StreamingPlayer({
   videoId,
   title,
@@ -17,12 +129,84 @@ export function StreamingPlayer({
   publishedDate,
 }: Props) {
   const [playing, setPlaying] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
 
   const poster =
     thumbnailUrl ||
     `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
-  const embedSrc = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1&playsinline=1&iv_load_policy=3&color=white&cc_load_policy=0&fs=1`;
+  // Mount the YouTube IFrame Player once user clicks play.
+  useEffect(() => {
+    if (!playing) return;
+    let cancelled = false;
+    let player: YTPlayer | null = null;
+
+    loadYouTubeAPI().then(() => {
+      if (cancelled || !containerRef.current || !window.YT?.Player) return;
+      const target = document.createElement("div");
+      containerRef.current.innerHTML = "";
+      containerRef.current.appendChild(target);
+
+      player = new window.YT.Player(target, {
+        videoId,
+        host: "https://www.youtube-nocookie.com",
+        width: "100%",
+        height: "100%",
+        playerVars: {
+          autoplay: 1,
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          iv_load_policy: 3,
+          fs: 1,
+          cc_load_policy: 1,
+          cc_lang_pref: "id",
+          hl: "id",
+        },
+        events: {
+          onReady: (e: unknown) => {
+            const p = (e as { target: YTPlayer }).target;
+            playerRef.current = p;
+            tryEnableIndonesianCaptions(p);
+          },
+          onStateChange: (e: unknown) => {
+            const ev = e as { data: number; target: YTPlayer };
+            if (ev.data === window.YT?.PlayerState.PLAYING) {
+              tryEnableIndonesianCaptions(ev.target);
+            }
+          },
+        },
+      });
+
+      // Style the iframe to fill its parent.
+      const obs = new MutationObserver(() => {
+        const iframe = target.tagName === "IFRAME"
+          ? (target as unknown as HTMLIFrameElement)
+          : containerRef.current?.querySelector("iframe");
+        if (iframe instanceof HTMLIFrameElement) {
+          iframe.style.position = "absolute";
+          iframe.style.inset = "0";
+          iframe.style.width = "100%";
+          iframe.style.height = "100%";
+          iframe.style.border = "0";
+        }
+      });
+      obs.observe(containerRef.current, { childList: true, subtree: true });
+    });
+
+    return () => {
+      cancelled = true;
+      try {
+        player?.destroy();
+        playerRef.current?.destroy();
+      } catch {
+        /* noop */
+      }
+      playerRef.current = null;
+      if (containerRef.current) containerRef.current.innerHTML = "";
+    };
+  }, [playing, videoId]);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60 bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)]">
@@ -109,14 +293,7 @@ export function StreamingPlayer({
             </div>
           </button>
         ) : (
-          <iframe
-            key={videoId}
-            src={embedSrc}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-            allowFullScreen
-            className="absolute inset-0 h-full w-full border-0"
-          />
+          <div ref={containerRef} className="absolute inset-0 h-full w-full" />
         )}
       </div>
 
@@ -130,7 +307,7 @@ export function StreamingPlayer({
           <span className="hidden sm:inline">Kualitas Otomatis</span>
         </div>
         <div className="flex items-center gap-3">
-          <span>Sub Indonesia</span>
+          <span>Sub Indonesia (otomatis)</span>
           <span className="text-white/30">·</span>
           <span>CinemaStream Player</span>
         </div>

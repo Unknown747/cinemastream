@@ -111,14 +111,158 @@ export async function resolveChannel(input: string): Promise<ChannelInfo> {
 }
 
 /**
+ * Scrape the channel's videos page as a fallback when the RSS feed is
+ * unavailable (some channels return HTTP 404 for /feeds/videos.xml even
+ * though they have public videos).
+ */
+async function scrapeChannelVideos(channelId: string): Promise<RssVideo[]> {
+  const url = `${YT_BASE}/channel/${encodeURIComponent(channelId)}/videos`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9" },
+  });
+  if (!res.ok) {
+    throw new Error(`Channel page fetch failed: HTTP ${res.status}`);
+  }
+  const html = await res.text();
+
+  const channelName =
+    unescapeHtml(html.match(/<meta property="og:title" content="([^"]+)"/)?.[1] ?? "") ||
+    "";
+
+  // Extract ytInitialData JSON to enumerate uploads.
+  const m = html.match(/var ytInitialData = (\{[\s\S]*?\});\s*<\/script>/);
+  const out: RssVideo[] = [];
+  const seen = new Set<string>();
+  if (m) {
+    try {
+      const data = JSON.parse(m[1]) as unknown;
+      const videos = collectVideoRenderers(data);
+      for (const v of videos) {
+        if (!v.videoId || seen.has(v.videoId)) continue;
+        seen.add(v.videoId);
+        out.push({
+          videoId: v.videoId,
+          title: v.title || "",
+          description: "",
+          publishedAt: v.publishedAt || new Date().toISOString(),
+          thumbnailUrl:
+            v.thumbnailUrl ||
+            `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`,
+          channelId,
+          channelName,
+        });
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  // Last-resort: regex over raw HTML for videoIds.
+  if (out.length === 0) {
+    const ids = Array.from(
+      new Set(
+        Array.from(html.matchAll(/"videoId":"([A-Za-z0-9_-]{11})"/g)).map(
+          (mm) => mm[1],
+        ),
+      ),
+    );
+    for (const id of ids.slice(0, 25)) {
+      out.push({
+        videoId: id,
+        title: id,
+        description: "",
+        publishedAt: new Date().toISOString(),
+        thumbnailUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+        channelId,
+        channelName,
+      });
+    }
+  }
+
+  return out;
+}
+
+interface ScrapedVideo {
+  videoId: string;
+  title: string;
+  publishedAt: string;
+  thumbnailUrl: string;
+}
+
+function collectVideoRenderers(node: unknown, out: ScrapedVideo[] = []): ScrapedVideo[] {
+  if (!node || typeof node !== "object") return out;
+  if (Array.isArray(node)) {
+    for (const item of node) collectVideoRenderers(item, out);
+    return out;
+  }
+  const obj = node as Record<string, unknown>;
+  const r =
+    (obj.videoRenderer as Record<string, unknown> | undefined) ||
+    (obj.gridVideoRenderer as Record<string, unknown> | undefined) ||
+    (obj.richItemRenderer
+      ? ((obj.richItemRenderer as Record<string, unknown>).content as
+          | Record<string, unknown>
+          | undefined)
+      : undefined);
+
+  if (r && typeof r === "object") {
+    const inner = (r.videoRenderer as Record<string, unknown>) || r;
+    const videoId = inner.videoId as string | undefined;
+    if (videoId) {
+      const titleObj = inner.title as
+        | { runs?: { text?: string }[]; simpleText?: string }
+        | undefined;
+      const title =
+        titleObj?.runs?.[0]?.text || titleObj?.simpleText || "";
+      const publishedText =
+        ((inner.publishedTimeText as { simpleText?: string } | undefined)
+          ?.simpleText) || "";
+      out.push({
+        videoId,
+        title,
+        publishedAt: parseRelativeTime(publishedText),
+        thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      });
+    }
+  }
+
+  for (const v of Object.values(obj)) collectVideoRenderers(v, out);
+  return out;
+}
+
+function parseRelativeTime(s: string): string {
+  if (!s) return new Date().toISOString();
+  const m = s.match(/(\d+)\s+(second|minute|hour|day|week|month|year)/i);
+  if (!m) return new Date().toISOString();
+  const n = parseInt(m[1], 10);
+  const unit = m[2].toLowerCase();
+  const ms: Record<string, number> = {
+    second: 1000,
+    minute: 60_000,
+    hour: 3_600_000,
+    day: 86_400_000,
+    week: 604_800_000,
+    month: 2_592_000_000,
+    year: 31_536_000_000,
+  };
+  return new Date(Date.now() - n * (ms[unit] ?? 0)).toISOString();
+}
+
+/**
  * Fetch the latest videos for a channel via the public RSS feed.
- * No API key required. Returns the most recent ~15 videos.
+ * No API key required. Returns the most recent ~15 videos. Falls back to
+ * scraping the channel page if RSS is unavailable.
  */
 export async function fetchChannelVideos(channelId: string): Promise<RssVideo[]> {
   const res = await fetch(RSS_URL(channelId), {
     headers: { "User-Agent": UA },
   });
   if (!res.ok) {
+    // Some channels (no public uploads tab, restricted, etc.) return 404 for
+    // the RSS feed. Fall back to scraping the channel page.
+    if (res.status === 404 || res.status === 410) {
+      return scrapeChannelVideos(channelId);
+    }
     throw new Error(`RSS fetch failed: HTTP ${res.status}`);
   }
   const xml = await res.text();
