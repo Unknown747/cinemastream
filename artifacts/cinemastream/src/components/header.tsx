@@ -26,7 +26,6 @@ const links = [
   { href: "/search", label: "Cari" },
   { href: "/watchlist", label: "Daftar Saya" },
   { href: "/blog", label: "Artikel" },
-  { href: "/admin", label: "Admin" },
   { href: "/about", label: "Tentang" },
 ];
 

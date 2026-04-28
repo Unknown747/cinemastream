@@ -1,23 +1,17 @@
 import { Link } from "wouter";
-import { Sailboat, Rss, ArrowUp } from "lucide-react";
+import { Sailboat, ArrowUp } from "lucide-react";
 
-type LinkItem = { href: string; label: string; testId: string };
-
-const exploreLinks: LinkItem[] = [
+const navLinks = [
   { href: "/", label: "Beranda", testId: "link-footer-home" },
-  { href: "/drama", label: "Semua Drama", testId: "link-footer-drama" },
+  { href: "/drama", label: "Drama", testId: "link-footer-drama" },
   { href: "/blog", label: "Artikel", testId: "link-footer-blog" },
-  { href: "/watchlist", label: "Daftar Saya", testId: "link-footer-watchlist" },
-];
-
-const aboutLinks: LinkItem[] = [
   { href: "/about", label: "Tentang", testId: "link-footer-about" },
   { href: "/contact", label: "Kontak", testId: "link-footer-contact" },
 ];
 
-const legalLinks: LinkItem[] = [
-  { href: "/privacy", label: "Kebijakan Privasi", testId: "link-footer-privacy" },
-  { href: "/terms", label: "Syarat & Ketentuan", testId: "link-footer-terms" },
+const legalLinks = [
+  { href: "/privacy", label: "Privasi", testId: "link-footer-privacy" },
+  { href: "/terms", label: "Syarat", testId: "link-footer-terms" },
   { href: "/dmca", label: "DMCA", testId: "link-footer-dmca" },
 ];
 
@@ -35,47 +29,23 @@ export function Footer() {
       className="border-t border-border/60 bg-background mt-12"
       role="contentinfo"
     >
-      <div className="mx-auto max-w-[1100px] px-3 sm:px-5 py-8">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
-          <div className="col-span-2 sm:col-span-1">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5"
-              data-testid="link-footer-logo"
-              aria-label="CinemaStream — Beranda"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
-                <Sailboat className="h-6 w-6" strokeWidth={2.2} />
-              </span>
-              <span className="font-semibold text-base tracking-tight">
-                Cinema<span className="text-primary">Stream</span>
-              </span>
-            </Link>
-            <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
-              Streaming drama China &amp; mini series Mandarin dengan judul
-              Bahasa Indonesia, update otomatis dari channel YouTube resmi.
-            </p>
-            <a
-              href="/api/feed.xml"
-              className="mt-4 inline-flex items-center gap-1.5 text-xs text-foreground/70 hover:text-primary transition-colors"
-              data-testid="link-footer-rss"
-              aria-label="RSS feed CinemaStream"
-            >
-              <Rss className="h-3.5 w-3.5" /> RSS Feed
-            </a>
-          </div>
+      <div className="mx-auto max-w-[1100px] px-3 sm:px-5 py-6">
+        {/* Brand row */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5"
+            data-testid="link-footer-logo"
+            aria-label="CinemaStream — Beranda"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-md text-primary">
+              <Sailboat className="h-6 w-6" strokeWidth={2.2} />
+            </span>
+            <span className="font-semibold text-base tracking-tight">
+              Cinema<span className="text-primary">Stream</span>
+            </span>
+          </Link>
 
-          <FooterColumn title="Jelajahi" links={exploreLinks} />
-          <FooterColumn title="Perusahaan" links={aboutLinks} />
-          <FooterColumn title="Legal" links={legalLinks} />
-        </div>
-
-        <div className="mt-8 border-t border-border/60 pt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-[11px] text-muted-foreground/85 leading-relaxed max-w-xl">
-            © {year} CinemaStream. Situs ini tidak menyimpan file apa pun di
-            servernya. Semua konten disediakan oleh YouTube. Hak cipta tetap
-            milik kreator masing-masing.
-          </p>
           <button
             type="button"
             onClick={scrollTop}
@@ -83,33 +53,48 @@ export function Footer() {
             data-testid="button-footer-scroll-top"
             aria-label="Kembali ke atas halaman"
           >
-            <ArrowUp className="h-3.5 w-3.5" /> Kembali ke atas
+            <ArrowUp className="h-3.5 w-3.5" /> Ke atas
           </button>
         </div>
-      </div>
-    </footer>
-  );
-}
 
-function FooterColumn({ title, links }: { title: string; links: LinkItem[] }) {
-  return (
-    <nav aria-label={title}>
-      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-foreground/60 mb-3">
-        {title}
-      </h2>
-      <ul className="space-y-2">
-        {links.map((l) => (
-          <li key={l.href}>
+        {/* Nav links — single horizontal row */}
+        <nav
+          className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"
+          aria-label="Navigasi footer"
+        >
+          {navLinks.map((l) => (
             <Link
+              key={l.href}
               href={l.href}
-              className="text-sm text-foreground/85 hover:text-primary transition-colors"
+              className="text-foreground/80 hover:text-primary transition-colors"
               data-testid={l.testId}
             >
               {l.label}
             </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
+          ))}
+        </nav>
+
+        {/* Legal row */}
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {legalLinks.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="hover:text-primary transition-colors"
+              data-testid={l.testId}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Copyright */}
+        <p className="mt-4 text-[11px] text-muted-foreground/85 leading-relaxed">
+          © {year} CinemaStream. Situs ini tidak menyimpan file apa pun;
+          seluruh konten disediakan oleh YouTube dan hak cipta tetap milik
+          kreator masing-masing.
+        </p>
+      </div>
+    </footer>
   );
 }

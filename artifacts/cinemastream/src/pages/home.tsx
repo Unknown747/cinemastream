@@ -1,4 +1,4 @@
-import { filmHrefForVideo, filmHrefForMovie } from "@/lib/slug";
+import { filmHrefForVideo } from "@/lib/slug";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
@@ -6,10 +6,10 @@ import {
   Play,
   RefreshCw,
   Newspaper,
-  Tv2,
   Bookmark,
   History as HistoryIcon,
   Trash2,
+  Flame,
 } from "lucide-react";
 import {
   useListAllVideos,
@@ -35,15 +35,6 @@ import {
 import { isTrailer } from "@/lib/video-meta";
 import { absoluteUrl } from "@/lib/site";
 
-type TabKey = "semua" | "drama" | "movie" | "trailer";
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "semua", label: "Semua" },
-  { key: "drama", label: "Drama" },
-  { key: "movie", label: "Movie" },
-  { key: "trailer", label: "Trailer" },
-];
-
 export default function HomePage() {
   const channels = useListChannels({
     query: { queryKey: getListChannelsQueryKey(), staleTime: 60_000 },
@@ -60,7 +51,6 @@ export default function HomePage() {
   });
 
   const list = videos.data ?? [];
-  const [tab, setTab] = useState<TabKey>("semua");
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
@@ -80,19 +70,10 @@ export default function HomePage() {
     };
   }, []);
 
-  const filtered = useMemo(() => {
-    if (tab === "trailer") {
-      return list.filter((v) => isTrailer(v));
-    }
-    const noTrailer = list.filter((v) => !isTrailer(v));
-    if (tab === "movie") {
-      return noTrailer.filter((v) => /movie|film|the movie/i.test(v.title));
-    }
-    if (tab === "drama") {
-      return noTrailer.filter((v) => !/movie|film|the movie/i.test(v.title));
-    }
-    return noTrailer;
-  }, [list, tab]);
+  const filtered = useMemo(
+    () => list.filter((v) => !isTrailer(v)),
+    [list],
+  );
 
   const continueWatching = useMemo(() => {
     const ids = new Set(list.map((v) => v.videoId));
@@ -134,7 +115,7 @@ export default function HomePage() {
   const fallbackMovies = useMemo(() => list.slice(0, 4), [list]);
   const movieRow = movies.length >= 1 ? movies : fallbackMovies;
 
-  // "Lagi Rame" — popular channels (sorted by film count)
+  // "Terbanyak di Tonton" — channels sorted by upload count (proxy for popularity)
   const popularChannels = useMemo(() => {
     const map = new Map<
       string,
@@ -205,29 +186,6 @@ export default function HomePage() {
       />
 
       <div className="mx-auto max-w-[1100px] px-3 sm:px-5">
-        {/* Welcome banner — brick/red tile */}
-        <section
-          className="mt-3 sm:mt-4 rounded-md px-4 py-4 text-sm leading-relaxed"
-          style={{ background: "rgba(125, 56, 56, 0.55)" }}
-          aria-label="Pesan sambutan"
-        >
-          <p className="text-foreground/95">
-            Selamat datang di <strong>CinemaStream</strong> tempat nonton film
-            drama China dan mini series Mandarin sub Indonesia paling update.
-            Judul otomatis diterjemahkan ke Bahasa Indonesia oleh AI
-            penerjemah, dan tontonan baru muncul sendiri tiap kreator upload.
-            Yuk pantau juga artikel kami di{" "}
-            <Link
-              href="/blog"
-              className="font-semibold underline underline-offset-2"
-              data-testid="link-welcome-blog"
-            >
-              [Blog CinemaStream]
-            </Link>
-            .
-          </p>
-        </section>
-
         {/* Lanjut Nonton — continue watching rail */}
         {continueWatching.length > 0 && (
           <section
@@ -342,16 +300,13 @@ export default function HomePage() {
                   key={v.videoId}
                   video={v}
                   index={i}
-                  type={
-                    /movie|film|the movie/i.test(v.title) ? "Movie" : "Drama"
-                  }
                 />
               ))}
             </div>
           </section>
         )}
 
-        {/* Tontonan Terbaru with tabs */}
+        {/* Tontonan Terbaru */}
         <section
           className="mt-6 sm:mt-8"
           aria-labelledby="terbaru-heading"
@@ -362,37 +317,6 @@ export default function HomePage() {
           >
             Tontonan Terbaru
           </h2>
-          <div className="mt-3 flex items-center justify-center">
-            <div
-              className="inline-flex rounded-md border border-border/70 bg-secondary/40 p-0.5"
-              role="tablist"
-              aria-label="Filter tontonan"
-            >
-              {TABS.map((t) => {
-                const active = tab === t.key;
-                return (
-                  <button
-                    key={t.key}
-                    type="button"
-                    onClick={() => {
-                      setTab(t.key);
-                      setPage(1);
-                    }}
-                    role="tab"
-                    aria-selected={active}
-                    className={`px-4 py-1.5 text-xs sm:text-sm font-medium rounded transition ${
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-foreground/85 hover:text-foreground"
-                    }`}
-                    data-testid={`tab-${t.key}`}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           {videos.isLoading && visible.length === 0 ? (
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -412,11 +336,6 @@ export default function HomePage() {
                     key={v.videoId}
                     video={v}
                     index={i}
-                    type={
-                      /movie|film|the movie/i.test(v.title)
-                        ? "Movie"
-                        : "Drama"
-                    }
                   />
                 ))}
               </div>
@@ -435,7 +354,7 @@ export default function HomePage() {
             </>
           ) : (
             <p className="mt-8 text-center text-sm text-muted-foreground">
-              Belum ada tontonan pada kategori ini.
+              Belum ada tontonan.
             </p>
           )}
         </section>
@@ -465,30 +384,18 @@ export default function HomePage() {
           </Link>
         )}
 
-        {/* Community / Discord-style banner — link to admin/contact */}
-        <section className="mt-6" aria-label="Bergabung dengan komunitas">
-          <p className="text-base font-semibold">Ikuti CinemaStream</p>
-          <Link
-            href="/contact"
-            className="mt-2 flex h-20 sm:h-24 items-center justify-center rounded-md text-white font-bold tracking-widest text-2xl sm:text-3xl"
-            style={{
-              background:
-                "linear-gradient(135deg, #5865F2 0%, #7289da 50%, #4f5bda 100%)",
-            }}
-            data-testid="link-community-banner"
-          >
-            <Tv2 className="mr-2 h-7 w-7" /> KOMUNITAS
-          </Link>
-        </section>
-
-        {/* Lagi Rame — popular channels list */}
+        {/* Terbanyak di Tonton — channels with most uploads */}
         {popularChannels.length > 0 && (
           <section
             className="mt-8"
             aria-labelledby="rame-heading"
           >
-            <h2 id="rame-heading" className="text-base font-semibold mb-3">
-              Lagi Rame
+            <h2
+              id="rame-heading"
+              className="text-base font-semibold mb-3 inline-flex items-center gap-1.5"
+            >
+              <Flame className="h-4 w-4 text-primary" />
+              Terbanyak di Tonton
             </h2>
             <ul className="divide-y divide-border/50 border-y border-border/50">
               {popularChannels.map((c) => (
@@ -511,10 +418,7 @@ export default function HomePage() {
                         {c.channelName}
                       </span>
                       <span className="block text-xs text-muted-foreground line-clamp-1">
-                        Drama Mandarin · {c.count} film tersedia
-                      </span>
-                      <span className="block text-xs text-muted-foreground/80">
-                        {Math.max(20, c.count * 17)} User Online
+                        {c.count} film tersedia
                       </span>
                     </span>
                   </Link>
@@ -579,7 +483,7 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {movieRow.map((v, i) => (
-                <DramaCard key={v.videoId} video={v} index={i} type="Movie" />
+                <DramaCard key={v.videoId} video={v} index={i} />
               ))}
             </div>
           </section>
@@ -638,18 +542,10 @@ export default function HomePage() {
           <section className="mt-12 mb-12 text-center" aria-label="Belum ada drama">
             <h2 className="text-xl font-semibold">Belum ada drama</h2>
             <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
-              Tambahkan channel YouTube drama China di halaman Admin
-              {channelCount > 0 ? "" : " — belum ada channel terdaftar"}, lalu
-              film-filmnya akan tampil otomatis di sini dengan judul Bahasa
-              Indonesia.
+              {channelCount > 0
+                ? "Channel sudah terdaftar — film akan muncul otomatis di sini setelah kreator upload."
+                : "Belum ada channel terdaftar. Film akan tampil otomatis di sini setelah channel ditambahkan."}
             </p>
-            <Link
-              href="/admin"
-              className="mt-5 inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition"
-              data-testid="link-empty-admin"
-            >
-              Buka Admin
-            </Link>
           </section>
         )}
 

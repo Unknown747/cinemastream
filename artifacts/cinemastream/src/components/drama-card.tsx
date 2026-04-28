@@ -93,7 +93,6 @@ export function DramaCard({
     });
   };
 
-  const year = new Date(video.publishedAt).getFullYear();
   const titleClass =
     size === "lg"
       ? "text-base leading-snug"
@@ -181,11 +180,10 @@ export function DramaCard({
             {video.title}
           </h3>
           <p className="mt-1 text-[12px] text-muted-foreground leading-tight">
-            <span className="text-primary font-medium">{year}</span>
-            <span className="mx-1.5 opacity-60">·</span>
-            <span>{type}</span>
-            <span className="mx-1.5 opacity-60">·</span>
-            <span>{formatRelative(video.publishedAt)}</span>
+            <span className="text-primary font-medium line-clamp-1">
+              {video.channelName}
+            </span>
+            <span className="block mt-0.5">{formatRelative(video.publishedAt)}</span>
           </p>
         </div>
       </Link>
