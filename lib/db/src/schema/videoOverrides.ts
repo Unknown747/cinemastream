@@ -6,6 +6,9 @@ export const videoOverridesTable = pgTable("video_overrides", {
   videoId: text("video_id").primaryKey(),
   title: text("title"),
   description: text("description"),
+  review: text("review"),
+  reviewModel: text("review_model"),
+  reviewGeneratedAt: timestamp("review_generated_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

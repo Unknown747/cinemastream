@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
-import { db, channelsTable, articlesTable } from "@workspace/db";
+import { db, channelsTable, articlesTable, videoOverridesTable } from "@workspace/db";
 import { fetchChannelVideosCached } from "../lib/youtube";
 import { logger } from "../lib/logger";
 import { filmPathForVideo } from "../lib/slug";
@@ -85,11 +85,21 @@ router.get("/sitemap-drama.xml", async (req, res) => {
       await Promise.all(channels.map((c) => fetchChannelVideosCached(c.channelId)))
     ).flat();
 
-    const articles = await db
-      .select()
-      .from(articlesTable)
-      .where(eq(articlesTable.status, "published"))
-      .orderBy(desc(articlesTable.publishedAt));
+    const [articles, overrides] = await Promise.all([
+      db
+        .select()
+        .from(articlesTable)
+        .where(eq(articlesTable.status, "published"))
+        .orderBy(desc(articlesTable.publishedAt)),
+      db.select().from(videoOverridesTable),
+    ]);
+
+    // Map videoId -> latest review timestamp so sitemap lastmod reflects
+    // when AI review was added (Google re-crawls fresher pages first).
+    const reviewMap = new Map<string, Date>();
+    for (const o of overrides) {
+      if (o.reviewGeneratedAt) reviewMap.set(o.videoId, o.reviewGeneratedAt);
+    }
 
     const urls: { loc: string; lastmod?: string }[] = [
       { loc: `${origin}/drama` },
@@ -99,9 +109,10 @@ router.get("/sitemap-drama.xml", async (req, res) => {
       urls.push({ loc: `${origin}/channel/${c.channelId}` });
     }
     for (const v of allVideos) {
+      const reviewedAt = reviewMap.get(v.videoId);
       urls.push({
         loc: `${origin}${filmPathForVideo(v.title, v.videoId)}`,
-        lastmod: v.publishedAt,
+        lastmod: reviewedAt ? reviewedAt.toISOString() : v.publishedAt,
       });
     }
     for (const a of articles) {

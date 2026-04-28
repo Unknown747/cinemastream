@@ -24,6 +24,7 @@ import { YouTubeAttribution } from "@/components/youtube-attribution";
 import { VideoDescription } from "@/components/video-description";
 import { StreamingPlayer } from "@/components/streaming-player";
 import { AdSlot } from "@/components/ad-slot";
+import { DramaReview } from "@/components/drama-review";
 import {
   isInWatchlist,
   toggleWatchlist,
@@ -412,6 +413,13 @@ export default function DramaDetailPage() {
                   </section>
                 );
               })()}
+
+              <DramaReview
+                videoId={video.videoId}
+                title={video.title}
+                channelName={video.channelName}
+                synopsis={video.description}
+              />
 
               <details className="mt-6 rounded-xl border border-border/60 bg-card/30 p-4 text-sm leading-relaxed text-foreground/80">
                 <summary className="cursor-pointer select-none font-serif text-base text-foreground">
