@@ -20,7 +20,10 @@ videos from configured YouTube channels.
   `/api/articles` (CRUD), `/api/articles/:slug` (GET), `/api/feed.xml` (RSS).
   Pulls latest videos from YouTube via the public RSS feed
   (`/feeds/videos.xml?channel_id=…`) — no API key required, in-memory cache 5 min.
-  AI translation uses gpt-5-mini via Replit AI Integrations (no key required).
+  AI translation uses an OpenAI-compatible client (`AI_INTEGRATIONS_OPENAI_BASE_URL` +
+  `AI_INTEGRATIONS_OPENAI_API_KEY` + `AI_MODEL`). On Replit those are populated by
+  the AI Integrations blueprint; on a VPS, point them at OpenAI / DeepSeek / Groq /
+  Ollama. If unset, translation is silently disabled (no crash).
 - **mockup-sandbox** (`/__mockup`) — design canvas (unused for product features).
 
 ## Database
@@ -69,6 +72,37 @@ underneath the new theme tokens.
 - React 19, Vite 7, Wouter, Tailwind v4, shadcn/ui, Framer Motion
 - Express 5, Pino, Drizzle ORM 0.45, Zod 3
 - Orval for OpenAPI → Zod + React Query codegen
+
+## Environment variables
+
+Full reference + cheat-sheet hidup di **`.env.example`** (root). Untuk deploy ke
+VPS sendiri, lihat **`DEPLOYMENT.md`**.
+
+Yang wajib (server):
+
+| Variable | Untuk apa |
+| --- | --- |
+| `DATABASE_URL` | Koneksi PostgreSQL (Drizzle) |
+| `ADMIN_PASSWORD` | Login `/admin` |
+| `SESSION_SECRET`, `COOKIE_SECRET` | Random ≥32 char (`openssl rand -base64 48`) |
+| `SITE_URL` | URL publik (sitemap, RSS, JSON-LD) |
+| `CORS_ORIGIN` | Domain frontend yang boleh hit `/api/*` |
+
+AI translate (opsional — kalau kosong, judul Mandarin tampil apa adanya):
+
+| Variable | Contoh nilai |
+| --- | --- |
+| `AI_INTEGRATIONS_OPENAI_BASE_URL` | `https://api.openai.com/v1` (atau DeepSeek / Groq / OpenRouter / Ollama lokal) |
+| `AI_INTEGRATIONS_OPENAI_API_KEY` | API key dari provider yang dipilih |
+| `AI_MODEL` | `gpt-4o-mini`, `deepseek-chat`, `llama-3.1-70b-versatile`, dst. Default `gpt-5-mini`. |
+
+Server lain-lain (semua punya default): `PORT` (8080), `NODE_ENV`, `LOG_LEVEL`,
+`BASE_PATH`.
+
+Frontend build-time (prefix `VITE_`, harus diset SEBELUM `pnpm build`):
+`VITE_ADSENSE_CLIENT`, `VITE_ADSENSE_SLOT_HOME_TOP`, `VITE_ADSENSE_SLOT_IN_ARTICLE`,
+`VITE_ADSENSE_SLOT_SIDEBAR`, `VITE_ADSENSE_SLOT_CHANNEL_BOTTOM`,
+`VITE_ADSENSE_SLOT_BLOG_BOTTOM`.
 
 ## Key commands
 

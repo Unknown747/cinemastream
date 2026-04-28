@@ -11,6 +11,7 @@ router.use("/translate", aiLimiter);
 
 const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+const MODEL = process.env.AI_MODEL || "gpt-5-mini";
 
 const client = baseURL && apiKey ? new OpenAI({ baseURL, apiKey }) : null;
 
@@ -38,7 +39,7 @@ router.post("/translate", requireAdmin, async (req, res): Promise<void> => {
   }
   try {
     const completion = await client.chat.completions.create({
-      model: "gpt-5-mini",
+      model: MODEL,
       max_completion_tokens: 8192,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
